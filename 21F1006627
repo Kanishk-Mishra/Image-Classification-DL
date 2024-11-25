@@ -1,1 +1,571 @@
-{"metadata":{"kernelspec":{"language":"python","display_name":"Python 3","name":"python3"},"language_info":{"name":"python","version":"3.10.14","mimetype":"text/x-python","codemirror_mode":{"name":"ipython","version":3},"pygments_lexer":"ipython3","nbconvert_exporter":"python","file_extension":".py"},"kaggle":{"accelerator":"none","dataSources":[{"sourceId":84763,"databundleVersionId":9549185,"sourceType":"competition"}],"isInternetEnabled":true,"language":"python","sourceType":"notebook","isGpuEnabled":false}},"nbformat_minor":4,"nbformat":4,"cells":[{"cell_type":"code","source":"import os\nimport torch\nfrom torch.utils.data import DataLoader, Dataset\nfrom torchvision import datasets, transforms, models\nfrom sklearn.model_selection import train_test_split\nimport pandas as pd\nimport numpy as np\n","metadata":{"_uuid":"8f2839f25d086af736a60e9eeb907d3b93b6e0e5","_cell_guid":"b1076dfc-b9ad-4769-8c92-a6c4dae69d19","trusted":true,"execution":{"iopub.status.busy":"2024-11-24T11:32:09.555958Z","iopub.execute_input":"2024-11-24T11:32:09.558693Z","iopub.status.idle":"2024-11-24T11:32:15.321838Z","shell.execute_reply.started":"2024-11-24T11:32:09.558633Z","shell.execute_reply":"2024-11-24T11:32:15.320729Z"}},"outputs":[],"execution_count":1},{"cell_type":"code","source":"# Paths to the dataset\ntrain_dir = '/kaggle/input/deep-learning-practice-image-classification/train'\ntest_dir = '/kaggle/input/deep-learning-practice-image-classification/test'","metadata":{"trusted":true,"execution":{"iopub.status.busy":"2024-11-24T11:41:35.756324Z","iopub.execute_input":"2024-11-24T11:41:35.757929Z","iopub.status.idle":"2024-11-24T11:41:35.763014Z","shell.execute_reply.started":"2024-11-24T11:41:35.757881Z","shell.execute_reply":"2024-11-24T11:41:35.761797Z"}},"outputs":[],"execution_count":2},{"cell_type":"code","source":"# List the train folders\nprint(os.listdir(train_dir))\n\n# Check a specific folder\nprint(os.listdir(os.path.join(train_dir, 'Amphibia')))\n","metadata":{"trusted":true,"execution":{"iopub.status.busy":"2024-11-24T11:43:02.560137Z","iopub.execute_input":"2024-11-24T11:43:02.560548Z","iopub.status.idle":"2024-11-24T11:43:02.582817Z","shell.execute_reply.started":"2024-11-24T11:43:02.560510Z","shell.execute_reply":"2024-11-24T11:43:02.581465Z"}},"outputs":[{"name":"stdout","text":"['Reptilia', 'Animalia', 'Arachnida', 'Amphibia', 'Aves', 'Mollusca', 'Fungi', 'Insecta', 'Plantae', 'Mammalia']\n['Amphibia_image_0627.jpg', 'Amphibia_image_0214.jpg', 'Amphibia_image_0197.jpg', 'Amphibia_image_0079.jpg', 'Amphibia_image_0503.jpg', 'Amphibia_image_0110.jpg', 'Amphibia_image_0277.jpg', 'Amphibia_image_0942.jpg', 'Amphibia_image_0909.jpg', 'Amphibia_image_0024.jpg', 'Amphibia_image_0100.jpg', 'Amphibia_image_0286.jpg', 'Amphibia_image_0023.jpg', 'Amphibia_image_0884.jpg', 'Amphibia_image_0066.jpg', 'Amphibia_image_0377.jpg', 'Amphibia_image_0630.jpg', 'Amphibia_image_0775.jpg', 'Amphibia_image_0072.jpg', 'Amphibia_image_0195.jpg', 'Amphibia_image_0089.jpg', 'Amphibia_image_0829.jpg', 'Amphibia_image_0928.jpg', 'Amphibia_image_0574.jpg', 'Amphibia_image_0091.jpg', 'Amphibia_image_0179.jpg', 'Amphibia_image_0870.jpg', 'Amphibia_image_0019.jpg', 'Amphibia_image_0634.jpg', 'Amphibia_image_0783.jpg', 'Amphibia_image_0939.jpg', 'Amphibia_image_0677.jpg', 'Amphibia_image_0925.jpg', 'Amphibia_image_0764.jpg', 'Amphibia_image_0616.jpg', 'Amphibia_image_0477.jpg', 'Amphibia_image_0046.jpg', 'Amphibia_image_0221.jpg', 'Amphibia_image_0549.jpg', 'Amphibia_image_0226.jpg', 'Amphibia_image_0240.jpg', 'Amphibia_image_0731.jpg', 'Amphibia_image_0164.jpg', 'Amphibia_image_0729.jpg', 'Amphibia_image_0518.jpg', 'Amphibia_image_0485.jpg', 'Amphibia_image_0562.jpg', 'Amphibia_image_0014.jpg', 'Amphibia_image_0807.jpg', 'Amphibia_image_0833.jpg', 'Amphibia_image_0997.jpg', 'Amphibia_image_0380.jpg', 'Amphibia_image_0076.jpg', 'Amphibia_image_0012.jpg', 'Amphibia_image_0244.jpg', 'Amphibia_image_0692.jpg', 'Amphibia_image_0058.jpg', 'Amphibia_image_0857.jpg', 'Amphibia_image_0441.jpg', 'Amphibia_image_0310.jpg', 'Amphibia_image_0826.jpg', 'Amphibia_image_0222.jpg', 'Amphibia_image_0301.jpg', 'Amphibia_image_0135.jpg', 'Amphibia_image_0189.jpg', 'Amphibia_image_0608.jpg', 'Amphibia_image_0314.jpg', 'Amphibia_image_0964.jpg', 'Amphibia_image_0129.jpg', 'Amphibia_image_0284.jpg', 'Amphibia_image_0074.jpg', 'Amphibia_image_0251.jpg', 'Amphibia_image_0256.jpg', 'Amphibia_image_0556.jpg', 'Amphibia_image_0680.jpg', 'Amphibia_image_0405.jpg', 'Amphibia_image_0934.jpg', 'Amphibia_image_0063.jpg', 'Amphibia_image_0512.jpg', 'Amphibia_image_0291.jpg', 'Amphibia_image_0523.jpg', 'Amphibia_image_0078.jpg', 'Amphibia_image_0951.jpg', 'Amphibia_image_0376.jpg', 'Amphibia_image_0918.jpg', 'Amphibia_image_0739.jpg', 'Amphibia_image_0329.jpg', 'Amphibia_image_0035.jpg', 'Amphibia_image_0869.jpg', 'Amphibia_image_0075.jpg', 'Amphibia_image_0597.jpg', 'Amphibia_image_0281.jpg', 'Amphibia_image_0215.jpg', 'Amphibia_image_0390.jpg', 'Amphibia_image_0203.jpg', 'Amphibia_image_0360.jpg', 'Amphibia_image_0983.jpg', 'Amphibia_image_0798.jpg', 'Amphibia_image_0594.jpg', 'Amphibia_image_0224.jpg', 'Amphibia_image_0318.jpg', 'Amphibia_image_0971.jpg', 'Amphibia_image_0397.jpg', 'Amphibia_image_0196.jpg', 'Amphibia_image_0759.jpg', 'Amphibia_image_0790.jpg', 'Amphibia_image_0408.jpg', 'Amphibia_image_0338.jpg', 'Amphibia_image_0980.jpg', 'Amphibia_image_0018.jpg', 'Amphibia_image_0017.jpg', 'Amphibia_image_0085.jpg', 'Amphibia_image_0427.jpg', 'Amphibia_image_0416.jpg', 'Amphibia_image_0099.jpg', 'Amphibia_image_0070.jpg', 'Amphibia_image_0348.jpg', 'Amphibia_image_0828.jpg', 'Amphibia_image_0926.jpg', 'Amphibia_image_0793.jpg', 'Amphibia_image_0752.jpg', 'Amphibia_image_0755.jpg', 'Amphibia_image_0315.jpg', 'Amphibia_image_0842.jpg', 'Amphibia_image_0949.jpg', 'Amphibia_image_0345.jpg', 'Amphibia_image_0409.jpg', 'Amphibia_image_0653.jpg', 'Amphibia_image_0872.jpg', 'Amphibia_image_0766.jpg', 'Amphibia_image_0859.jpg', 'Amphibia_image_0953.jpg', 'Amphibia_image_0773.jpg', 'Amphibia_image_0873.jpg', 'Amphibia_image_0073.jpg', 'Amphibia_image_0061.jpg', 'Amphibia_image_0225.jpg', 'Amphibia_image_0998.jpg', 'Amphibia_image_0289.jpg', 'Amphibia_image_0347.jpg', 'Amphibia_image_0550.jpg', 'Amphibia_image_0260.jpg', 'Amphibia_image_0850.jpg', 'Amphibia_image_0188.jpg', 'Amphibia_image_0462.jpg', 'Amphibia_image_0959.jpg', 'Amphibia_image_0824.jpg', 'Amphibia_image_0501.jpg', 'Amphibia_image_0517.jpg', 'Amphibia_image_0955.jpg', 'Amphibia_image_0698.jpg', 'Amphibia_image_0383.jpg', 'Amphibia_image_0054.jpg', 'Amphibia_image_0223.jpg', 'Amphibia_image_0022.jpg', 'Amphibia_image_0167.jpg', 'Amphibia_image_0456.jpg', 'Amphibia_image_0025.jpg', 'Amphibia_image_0748.jpg', 'Amphibia_image_0541.jpg', 'Amphibia_image_0157.jpg', 'Amphibia_image_0919.jpg', 'Amphibia_image_0185.jpg', 'Amphibia_image_0010.jpg', 'Amphibia_image_0878.jpg', 'Amphibia_image_0459.jpg', 'Amphibia_image_0715.jpg', 'Amphibia_image_0509.jpg', 'Amphibia_image_0741.jpg', 'Amphibia_image_0424.jpg', 'Amphibia_image_0805.jpg', 'Amphibia_image_0812.jpg', 'Amphibia_image_0309.jpg', 'Amphibia_image_0579.jpg', 'Amphibia_image_0947.jpg', 'Amphibia_image_0150.jpg', 'Amphibia_image_0488.jpg', 'Amphibia_image_0472.jpg', 'Amphibia_image_0843.jpg', 'Amphibia_image_0418.jpg', 'Amphibia_image_0625.jpg', 'Amphibia_image_0366.jpg', 'Amphibia_image_0825.jpg', 'Amphibia_image_0497.jpg', 'Amphibia_image_0651.jpg', 'Amphibia_image_0469.jpg', 'Amphibia_image_0116.jpg', 'Amphibia_image_0060.jpg', 'Amphibia_image_0685.jpg', 'Amphibia_image_0683.jpg', 'Amphibia_image_0131.jpg', 'Amphibia_image_0893.jpg', 'Amphibia_image_0769.jpg', 'Amphibia_image_0796.jpg', 'Amphibia_image_0631.jpg', 'Amphibia_image_0876.jpg', 'Amphibia_image_0096.jpg', 'Amphibia_image_0583.jpg', 'Amphibia_image_0480.jpg', 'Amphibia_image_0173.jpg', 'Amphibia_image_0331.jpg', 'Amphibia_image_0663.jpg', 'Amphibia_image_0864.jpg', 'Amphibia_image_0059.jpg', 'Amphibia_image_0365.jpg', 'Amphibia_image_0858.jpg', 'Amphibia_image_0933.jpg', 'Amphibia_image_0785.jpg', 'Amphibia_image_0005.jpg', 'Amphibia_image_0337.jpg', 'Amphibia_image_0471.jpg', 'Amphibia_image_0844.jpg', 'Amphibia_image_0856.jpg', 'Amphibia_image_0721.jpg', 'Amphibia_image_0231.jpg', 'Amphibia_image_0836.jpg', 'Amphibia_image_0147.jpg', 'Amphibia_image_0420.jpg', 'Amphibia_image_0328.jpg', 'Amphibia_image_0900.jpg', 'Amphibia_image_0770.jpg', 'Amphibia_image_0130.jpg', 'Amphibia_image_0288.jpg', 'Amphibia_image_0493.jpg', 'Amphibia_image_0837.jpg', 'Amphibia_image_0756.jpg', 'Amphibia_image_0820.jpg', 'Amphibia_image_0629.jpg', 'Amphibia_image_0994.jpg', 'Amphibia_image_0120.jpg', 'Amphibia_image_0363.jpg', 'Amphibia_image_0387.jpg', 'Amphibia_image_0435.jpg', 'Amphibia_image_0492.jpg', 'Amphibia_image_0581.jpg', 'Amphibia_image_0730.jpg', 'Amphibia_image_0576.jpg', 'Amphibia_image_0172.jpg', 'Amphibia_image_0587.jpg', 'Amphibia_image_0094.jpg', 'Amphibia_image_0520.jpg', 'Amphibia_image_0335.jpg', 'Amphibia_image_0332.jpg', 'Amphibia_image_0274.jpg', 'Amphibia_image_0500.jpg', 'Amphibia_image_0303.jpg', 'Amphibia_image_0317.jpg', 'Amphibia_image_0374.jpg', 'Amphibia_image_0521.jpg', 'Amphibia_image_0467.jpg', 'Amphibia_image_0792.jpg', 'Amphibia_image_0598.jpg', 'Amphibia_image_0640.jpg', 'Amphibia_image_0144.jpg', 'Amphibia_image_0133.jpg', 'Amphibia_image_0302.jpg', 'Amphibia_image_0827.jpg', 'Amphibia_image_0687.jpg', 'Amphibia_image_0428.jpg', 'Amphibia_image_0448.jpg', 'Amphibia_image_0056.jpg', 'Amphibia_image_0944.jpg', 'Amphibia_image_0178.jpg', 'Amphibia_image_0264.jpg', 'Amphibia_image_0924.jpg', 'Amphibia_image_0294.jpg', 'Amphibia_image_0106.jpg', 'Amphibia_image_0672.jpg', 'Amphibia_image_0321.jpg', 'Amphibia_image_0033.jpg', 'Amphibia_image_0422.jpg', 'Amphibia_image_0709.jpg', 'Amphibia_image_0711.jpg', 'Amphibia_image_0077.jpg', 'Amphibia_image_0253.jpg', 'Amphibia_image_0602.jpg', 'Amphibia_image_0902.jpg', 'Amphibia_image_0128.jpg', 'Amphibia_image_0589.jpg', 'Amphibia_image_0421.jpg', 'Amphibia_image_0940.jpg', 'Amphibia_image_0571.jpg', 'Amphibia_image_0252.jpg', 'Amphibia_image_0401.jpg', 'Amphibia_image_0830.jpg', 'Amphibia_image_0411.jpg', 'Amphibia_image_0443.jpg', 'Amphibia_image_0892.jpg', 'Amphibia_image_0148.jpg', 'Amphibia_image_0249.jpg', 'Amphibia_image_0626.jpg', 'Amphibia_image_0593.jpg', 'Amphibia_image_0245.jpg', 'Amphibia_image_0847.jpg', 'Amphibia_image_0927.jpg', 'Amphibia_image_0393.jpg', 'Amphibia_image_0257.jpg', 'Amphibia_image_0991.jpg', 'Amphibia_image_0458.jpg', 'Amphibia_image_0307.jpg', 'Amphibia_image_0806.jpg', 'Amphibia_image_0378.jpg', 'Amphibia_image_0082.jpg', 'Amphibia_image_0237.jpg', 'Amphibia_image_0062.jpg', 'Amphibia_image_0292.jpg', 'Amphibia_image_0694.jpg', 'Amphibia_image_0287.jpg', 'Amphibia_image_0851.jpg', 'Amphibia_image_0362.jpg', 'Amphibia_image_0146.jpg', 'Amphibia_image_0103.jpg', 'Amphibia_image_0970.jpg', 'Amphibia_image_0297.jpg', 'Amphibia_image_0402.jpg', 'Amphibia_image_0930.jpg', 'Amphibia_image_0690.jpg', 'Amphibia_image_0429.jpg', 'Amphibia_image_0515.jpg', 'Amphibia_image_0296.jpg', 'Amphibia_image_0684.jpg', 'Amphibia_image_0255.jpg', 'Amphibia_image_0219.jpg', 'Amphibia_image_0108.jpg', 'Amphibia_image_0600.jpg', 'Amphibia_image_0403.jpg', 'Amphibia_image_0720.jpg', 'Amphibia_image_0612.jpg', 'Amphibia_image_0425.jpg', 'Amphibia_image_0175.jpg', 'Amphibia_image_0446.jpg', 'Amphibia_image_0124.jpg', 'Amphibia_image_0941.jpg', 'Amphibia_image_0004.jpg', 'Amphibia_image_0118.jpg', 'Amphibia_image_0716.jpg', 'Amphibia_image_0384.jpg', 'Amphibia_image_0966.jpg', 'Amphibia_image_0623.jpg', 'Amphibia_image_0950.jpg', 'Amphibia_image_0595.jpg', 'Amphibia_image_0732.jpg', 'Amphibia_image_0527.jpg', 'Amphibia_image_0776.jpg', 'Amphibia_image_0159.jpg', 'Amphibia_image_0290.jpg', 'Amphibia_image_0457.jpg', 'Amphibia_image_0762.jpg', 'Amphibia_image_0990.jpg', 'Amphibia_image_0526.jpg', 'Amphibia_image_0395.jpg', 'Amphibia_image_0917.jpg', 'Amphibia_image_0745.jpg', 'Amphibia_image_0580.jpg', 'Amphibia_image_0210.jpg', 'Amphibia_image_0449.jpg', 'Amphibia_image_0330.jpg', 'Amphibia_image_0661.jpg', 'Amphibia_image_0502.jpg', 'Amphibia_image_0042.jpg', 'Amphibia_image_0388.jpg', 'Amphibia_image_0912.jpg', 'Amphibia_image_0032.jpg', 'Amphibia_image_0914.jpg', 'Amphibia_image_0578.jpg', 'Amphibia_image_0777.jpg', 'Amphibia_image_0166.jpg', 'Amphibia_image_0993.jpg', 'Amphibia_image_0158.jpg', 'Amphibia_image_0643.jpg', 'Amphibia_image_0645.jpg', 'Amphibia_image_0090.jpg', 'Amphibia_image_0921.jpg', 'Amphibia_image_0570.jpg', 'Amphibia_image_0350.jpg', 'Amphibia_image_0674.jpg', 'Amphibia_image_0832.jpg', 'Amphibia_image_0823.jpg', 'Amphibia_image_0113.jpg', 'Amphibia_image_0801.jpg', 'Amphibia_image_0200.jpg', 'Amphibia_image_0413.jpg', 'Amphibia_image_0069.jpg', 'Amphibia_image_0052.jpg', 'Amphibia_image_0306.jpg', 'Amphibia_image_0999.jpg', 'Amphibia_image_0229.jpg', 'Amphibia_image_0356.jpg', 'Amphibia_image_0686.jpg', 'Amphibia_image_0813.jpg', 'Amphibia_image_0064.jpg', 'Amphibia_image_0433.jpg', 'Amphibia_image_0372.jpg', 'Amphibia_image_0364.jpg', 'Amphibia_image_0168.jpg', 'Amphibia_image_0972.jpg', 'Amphibia_image_0450.jpg', 'Amphibia_image_0554.jpg', 'Amphibia_image_0838.jpg', 'Amphibia_image_0359.jpg', 'Amphibia_image_0343.jpg', 'Amphibia_image_0803.jpg', 'Amphibia_image_0712.jpg', 'Amphibia_image_0212.jpg', 'Amphibia_image_0761.jpg', 'Amphibia_image_0621.jpg', 'Amphibia_image_0484.jpg', 'Amphibia_image_0254.jpg', 'Amphibia_image_0985.jpg', 'Amphibia_image_0751.jpg', 'Amphibia_image_0911.jpg', 'Amphibia_image_0156.jpg', 'Amphibia_image_0540.jpg', 'Amphibia_image_0081.jpg', 'Amphibia_image_0992.jpg', 'Amphibia_image_0861.jpg', 'Amphibia_image_0208.jpg', 'Amphibia_image_0708.jpg', 'Amphibia_image_0482.jpg', 'Amphibia_image_0171.jpg', 'Amphibia_image_0699.jpg', 'Amphibia_image_0889.jpg', 'Amphibia_image_0638.jpg', 'Amphibia_image_0952.jpg', 'Amphibia_image_0723.jpg', 'Amphibia_image_0207.jpg', 'Amphibia_image_0534.jpg', 'Amphibia_image_0995.jpg', 'Amphibia_image_0543.jpg', 'Amphibia_image_0702.jpg', 'Amphibia_image_0811.jpg', 'Amphibia_image_0234.jpg', 'Amphibia_image_0136.jpg', 'Amphibia_image_0193.jpg', 'Amphibia_image_0250.jpg', 'Amphibia_image_0095.jpg', 'Amphibia_image_0276.jpg', 'Amphibia_image_0682.jpg', 'Amphibia_image_0697.jpg', 'Amphibia_image_0227.jpg', 'Amphibia_image_0194.jpg', 'Amphibia_image_0169.jpg', 'Amphibia_image_0822.jpg', 'Amphibia_image_0351.jpg', 'Amphibia_image_0134.jpg', 'Amphibia_image_0152.jpg', 'Amphibia_image_0453.jpg', 'Amphibia_image_0109.jpg', 'Amphibia_image_0669.jpg', 'Amphibia_image_0818.jpg', 'Amphibia_image_0724.jpg', 'Amphibia_image_0592.jpg', 'Amphibia_image_0772.jpg', 'Amphibia_image_0339.jpg', 'Amphibia_image_0863.jpg', 'Amphibia_image_0426.jpg', 'Amphibia_image_0875.jpg', 'Amphibia_image_0505.jpg', 'Amphibia_image_0671.jpg', 'Amphibia_image_0883.jpg', 'Amphibia_image_0436.jpg', 'Amphibia_image_0767.jpg', 'Amphibia_image_0719.jpg', 'Amphibia_image_0819.jpg', 'Amphibia_image_0037.jpg', 'Amphibia_image_0430.jpg', 'Amphibia_image_0607.jpg', 'Amphibia_image_0238.jpg', 'Amphibia_image_0615.jpg', 'Amphibia_image_0445.jpg', 'Amphibia_image_0268.jpg', 'Amphibia_image_0463.jpg', 'Amphibia_image_0596.jpg', 'Amphibia_image_0165.jpg', 'Amphibia_image_0368.jpg', 'Amphibia_image_0817.jpg', 'Amphibia_image_0948.jpg', 'Amphibia_image_0609.jpg', 'Amphibia_image_0714.jpg', 'Amphibia_image_0142.jpg', 'Amphibia_image_0474.jpg', 'Amphibia_image_0572.jpg', 'Amphibia_image_0324.jpg', 'Amphibia_image_0051.jpg', 'Amphibia_image_0791.jpg', 'Amphibia_image_0852.jpg', 'Amphibia_image_0901.jpg', 'Amphibia_image_0386.jpg', 'Amphibia_image_0123.jpg', 'Amphibia_image_0573.jpg', 'Amphibia_image_0722.jpg', 'Amphibia_image_0437.jpg', 'Amphibia_image_0530.jpg', 'Amphibia_image_0742.jpg', 'Amphibia_image_0890.jpg', 'Amphibia_image_0236.jpg', 'Amphibia_image_0495.jpg', 'Amphibia_image_0217.jpg', 'Amphibia_image_0522.jpg', 'Amphibia_image_0897.jpg', 'Amphibia_image_0780.jpg', 'Amphibia_image_0451.jpg', 'Amphibia_image_0211.jpg', 'Amphibia_image_0821.jpg', 'Amphibia_image_0262.jpg', 'Amphibia_image_0149.jpg', 'Amphibia_image_0438.jpg', 'Amphibia_image_0734.jpg', 'Amphibia_image_0003.jpg', 'Amphibia_image_0163.jpg', 'Amphibia_image_0968.jpg', 'Amphibia_image_0789.jpg', 'Amphibia_image_0553.jpg', 'Amphibia_image_0700.jpg', 'Amphibia_image_0881.jpg', 'Amphibia_image_0763.jpg', 'Amphibia_image_0779.jpg', 'Amphibia_image_0239.jpg', 'Amphibia_image_0599.jpg', 'Amphibia_image_0533.jpg', 'Amphibia_image_0209.jpg', 'Amphibia_image_0795.jpg', 'Amphibia_image_0354.jpg', 'Amphibia_image_0996.jpg', 'Amphibia_image_0419.jpg', 'Amphibia_image_0840.jpg', 'Amphibia_image_0619.jpg', 'Amphibia_image_0258.jpg', 'Amphibia_image_0080.jpg', 'Amphibia_image_0162.jpg', 'Amphibia_image_0002.jpg', 'Amphibia_image_0655.jpg', 'Amphibia_image_0614.jpg', 'Amphibia_image_0008.jpg', 'Amphibia_image_0831.jpg', 'Amphibia_image_0030.jpg', 'Amphibia_image_0246.jpg', 'Amphibia_image_0962.jpg', 'Amphibia_image_0988.jpg', 'Amphibia_image_0633.jpg', 'Amphibia_image_0974.jpg', 'Amphibia_image_0945.jpg', 'Amphibia_image_0907.jpg', 'Amphibia_image_0691.jpg', 'Amphibia_image_0230.jpg', 'Amphibia_image_0586.jpg', 'Amphibia_image_0808.jpg', 'Amphibia_image_0263.jpg', 'Amphibia_image_0735.jpg', 'Amphibia_image_0036.jpg', 'Amphibia_image_0009.jpg', 'Amphibia_image_0067.jpg', 'Amphibia_image_0525.jpg', 'Amphibia_image_0511.jpg', 'Amphibia_image_0143.jpg', 'Amphibia_image_0905.jpg', 'Amphibia_image_0015.jpg', 'Amphibia_image_0652.jpg', 'Amphibia_image_0860.jpg', 'Amphibia_image_0664.jpg', 'Amphibia_image_0746.jpg', 'Amphibia_image_0757.jpg', 'Amphibia_image_0984.jpg', 'Amphibia_image_0084.jpg', 'Amphibia_image_0273.jpg', 'Amphibia_image_0001.jpg', 'Amphibia_image_0845.jpg', 'Amphibia_image_0659.jpg', 'Amphibia_image_0353.jpg', 'Amphibia_image_0744.jpg', 'Amphibia_image_0333.jpg', 'Amphibia_image_0047.jpg', 'Amphibia_image_0415.jpg', 'Amphibia_image_0026.jpg', 'Amphibia_image_0232.jpg', 'Amphibia_image_0853.jpg', 'Amphibia_image_0644.jpg', 'Amphibia_image_0935.jpg', 'Amphibia_image_0753.jpg', 'Amphibia_image_0038.jpg', 'Amphibia_image_0898.jpg', 'Amphibia_image_0725.jpg', 'Amphibia_image_0923.jpg', 'Amphibia_image_0569.jpg', 'Amphibia_image_0508.jpg', 'Amphibia_image_0478.jpg', 'Amphibia_image_0122.jpg', 'Amphibia_image_0269.jpg', 'Amphibia_image_0749.jpg', 'Amphibia_image_0524.jpg', 'Amphibia_image_0896.jpg', 'Amphibia_image_0137.jpg', 'Amphibia_image_0673.jpg', 'Amphibia_image_0768.jpg', 'Amphibia_image_0781.jpg', 'Amphibia_image_0577.jpg', 'Amphibia_image_0270.jpg', 'Amphibia_image_0327.jpg', 'Amphibia_image_0846.jpg', 'Amphibia_image_0689.jpg', 'Amphibia_image_0298.jpg', 'Amphibia_image_0021.jpg', 'Amphibia_image_0382.jpg', 'Amphibia_image_0346.jpg', 'Amphibia_image_0913.jpg', 'Amphibia_image_0617.jpg', 'Amphibia_image_0305.jpg', 'Amphibia_image_0560.jpg', 'Amphibia_image_0613.jpg', 'Amphibia_image_0102.jpg', 'Amphibia_image_0760.jpg', 'Amphibia_image_0960.jpg', 'Amphibia_image_0706.jpg', 'Amphibia_image_0336.jpg', 'Amphibia_image_0558.jpg', 'Amphibia_image_0590.jpg', 'Amphibia_image_0218.jpg', 'Amphibia_image_0551.jpg', 'Amphibia_image_0929.jpg', 'Amphibia_image_0125.jpg', 'Amphibia_image_0410.jpg', 'Amphibia_image_0367.jpg', 'Amphibia_image_0325.jpg', 'Amphibia_image_0703.jpg', 'Amphibia_image_0241.jpg', 'Amphibia_image_0444.jpg', 'Amphibia_image_0127.jpg', 'Amphibia_image_0434.jpg', 'Amphibia_image_0654.jpg', 'Amphibia_image_0496.jpg', 'Amphibia_image_0937.jpg', 'Amphibia_image_0322.jpg', 'Amphibia_image_0355.jpg', 'Amphibia_image_0011.jpg', 'Amphibia_image_0507.jpg', 'Amphibia_image_0041.jpg', 'Amphibia_image_0894.jpg', 'Amphibia_image_0839.jpg', 'Amphibia_image_0486.jpg', 'Amphibia_image_0848.jpg', 'Amphibia_image_0514.jpg', 'Amphibia_image_0679.jpg', 'Amphibia_image_0187.jpg', 'Amphibia_image_0675.jpg', 'Amphibia_image_0048.jpg', 'Amphibia_image_0204.jpg', 'Amphibia_image_0868.jpg', 'Amphibia_image_0470.jpg', 'Amphibia_image_0398.jpg', 'Amphibia_image_0532.jpg', 'Amphibia_image_0271.jpg', 'Amphibia_image_0261.jpg', 'Amphibia_image_0177.jpg', 'Amphibia_image_0727.jpg', 'Amphibia_image_0275.jpg', 'Amphibia_image_0213.jpg', 'Amphibia_image_0657.jpg', 'Amphibia_image_0862.jpg', 'Amphibia_image_0414.jpg', 'Amphibia_image_0431.jpg', 'Amphibia_image_0440.jpg', 'Amphibia_image_0529.jpg', 'Amphibia_image_0667.jpg', 'Amphibia_image_0624.jpg', 'Amphibia_image_0936.jpg', 'Amphibia_image_0979.jpg', 'Amphibia_image_0620.jpg', 'Amphibia_image_0564.jpg', 'Amphibia_image_0695.jpg', 'Amphibia_image_0466.jpg', 'Amphibia_image_0885.jpg', 'Amphibia_image_0065.jpg', 'Amphibia_image_0866.jpg', 'Amphibia_image_0247.jpg', 'Amphibia_image_0855.jpg', 'Amphibia_image_0656.jpg', 'Amphibia_image_0242.jpg', 'Amphibia_image_0279.jpg', 'Amphibia_image_0499.jpg', 'Amphibia_image_0053.jpg', 'Amphibia_image_0373.jpg', 'Amphibia_image_0202.jpg', 'Amphibia_image_0278.jpg', 'Amphibia_image_0181.jpg', 'Amphibia_image_0340.jpg', 'Amphibia_image_0611.jpg', 'Amphibia_image_0295.jpg', 'Amphibia_image_0546.jpg', 'Amphibia_image_0544.jpg', 'Amphibia_image_0184.jpg', 'Amphibia_image_0475.jpg', 'Amphibia_image_0648.jpg', 'Amphibia_image_0976.jpg', 'Amphibia_image_0604.jpg', 'Amphibia_image_0771.jpg', 'Amphibia_image_0098.jpg', 'Amphibia_image_0140.jpg', 'Amphibia_image_0563.jpg', 'Amphibia_image_0031.jpg', 'Amphibia_image_0737.jpg', 'Amphibia_image_0465.jpg', 'Amphibia_image_0498.jpg', 'Amphibia_image_0114.jpg', 'Amphibia_image_0243.jpg', 'Amphibia_image_0910.jpg', 'Amphibia_image_0155.jpg', 'Amphibia_image_0267.jpg', 'Amphibia_image_0688.jpg', 'Amphibia_image_0432.jpg', 'Amphibia_image_0854.jpg', 'Amphibia_image_0938.jpg', 'Amphibia_image_0476.jpg', 'Amphibia_image_0635.jpg', 'Amphibia_image_0967.jpg', 'Amphibia_image_0713.jpg', 'Amphibia_image_0610.jpg', 'Amphibia_image_0536.jpg', 'Amphibia_image_0272.jpg', 'Amphibia_image_0119.jpg', 'Amphibia_image_0814.jpg', 'Amphibia_image_0758.jpg', 'Amphibia_image_0981.jpg', 'Amphibia_image_0016.jpg', 'Amphibia_image_0088.jpg', 'Amphibia_image_0815.jpg', 'Amphibia_image_0750.jpg', 'Amphibia_image_0375.jpg', 'Amphibia_image_0718.jpg', 'Amphibia_image_0153.jpg', 'Amphibia_image_0198.jpg', 'Amphibia_image_0531.jpg', 'Amphibia_image_0439.jpg', 'Amphibia_image_0539.jpg', 'Amphibia_image_0568.jpg', 'Amphibia_image_0452.jpg', 'Amphibia_image_0092.jpg', 'Amphibia_image_0567.jpg', 'Amphibia_image_0887.jpg', 'Amphibia_image_0728.jpg', 'Amphibia_image_0055.jpg', 'Amphibia_image_0882.jpg', 'Amphibia_image_0093.jpg', 'Amphibia_image_0784.jpg', 'Amphibia_image_0538.jpg', 'Amphibia_image_0454.jpg', 'Amphibia_image_0637.jpg', 'Amphibia_image_0050.jpg', 'Amphibia_image_0969.jpg', 'Amphibia_image_0489.jpg', 'Amphibia_image_0584.jpg', 'Amphibia_image_0736.jpg', 'Amphibia_image_0201.jpg', 'Amphibia_image_0908.jpg', 'Amphibia_image_0027.jpg', 'Amphibia_image_0220.jpg', 'Amphibia_image_0841.jpg', 'Amphibia_image_0566.jpg', 'Amphibia_image_0483.jpg', 'Amphibia_image_0097.jpg', 'Amphibia_image_0352.jpg', 'Amphibia_image_0285.jpg', 'Amphibia_image_0104.jpg', 'Amphibia_image_0903.jpg', 'Amphibia_image_0170.jpg', 'Amphibia_image_0552.jpg', 'Amphibia_image_0895.jpg', 'Amphibia_image_0504.jpg', 'Amphibia_image_0658.jpg', 'Amphibia_image_0920.jpg', 'Amphibia_image_0879.jpg', 'Amphibia_image_0765.jpg', 'Amphibia_image_0641.jpg', 'Amphibia_image_0954.jpg', 'Amphibia_image_0358.jpg', 'Amphibia_image_0877.jpg', 'Amphibia_image_0668.jpg', 'Amphibia_image_0660.jpg', 'Amphibia_image_0726.jpg', 'Amphibia_image_0537.jpg', 'Amphibia_image_0479.jpg', 'Amphibia_image_0049.jpg', 'Amphibia_image_0299.jpg', 'Amphibia_image_0407.jpg', 'Amphibia_image_0126.jpg', 'Amphibia_image_0676.jpg', 'Amphibia_image_0606.jpg', 'Amphibia_image_0891.jpg', 'Amphibia_image_0283.jpg', 'Amphibia_image_0510.jpg', 'Amphibia_image_0743.jpg', 'Amphibia_image_0696.jpg', 'Amphibia_image_0265.jpg', 'Amphibia_image_0460.jpg', 'Amphibia_image_0810.jpg', 'Amphibia_image_0516.jpg', 'Amphibia_image_0986.jpg', 'Amphibia_image_0678.jpg', 'Amphibia_image_0304.jpg', 'Amphibia_image_0618.jpg', 'Amphibia_image_0029.jpg', 'Amphibia_image_0300.jpg', 'Amphibia_image_0733.jpg', 'Amphibia_image_0965.jpg', 'Amphibia_image_0849.jpg', 'Amphibia_image_0802.jpg', 'Amphibia_image_0528.jpg', 'Amphibia_image_0662.jpg', 'Amphibia_image_0880.jpg', 'Amphibia_image_0447.jpg', 'Amphibia_image_0886.jpg', 'Amphibia_image_0931.jpg', 'Amphibia_image_0809.jpg', 'Amphibia_image_0865.jpg', 'Amphibia_image_0039.jpg', 'Amphibia_image_0989.jpg', 'Amphibia_image_0632.jpg', 'Amphibia_image_0535.jpg', 'Amphibia_image_0105.jpg', 'Amphibia_image_0392.jpg', 'Amphibia_image_0205.jpg', 'Amphibia_image_0180.jpg', 'Amphibia_image_0151.jpg', 'Amphibia_image_0186.jpg', 'Amphibia_image_0034.jpg', 'Amphibia_image_0334.jpg', 'Amphibia_image_0642.jpg', 'Amphibia_image_0494.jpg', 'Amphibia_image_0266.jpg', 'Amphibia_image_0548.jpg', 'Amphibia_image_0961.jpg', 'Amphibia_image_0747.jpg', 'Amphibia_image_0963.jpg', 'Amphibia_image_0391.jpg', 'Amphibia_image_0874.jpg', 'Amphibia_image_0139.jpg', 'Amphibia_image_0417.jpg', 'Amphibia_image_0115.jpg', 'Amphibia_image_0956.jpg', 'Amphibia_image_0943.jpg', 'Amphibia_image_0605.jpg', 'Amphibia_image_0190.jpg', 'Amphibia_image_0112.jpg', 'Amphibia_image_0915.jpg', 'Amphibia_image_0371.jpg', 'Amphibia_image_0342.jpg', 'Amphibia_image_0906.jpg', 'Amphibia_image_0138.jpg', 'Amphibia_image_0379.jpg', 'Amphibia_image_0312.jpg', 'Amphibia_image_0904.jpg', 'Amphibia_image_0040.jpg', 'Amphibia_image_0778.jpg', 'Amphibia_image_0361.jpg', 'Amphibia_image_0670.jpg', 'Amphibia_image_0045.jpg', 'Amphibia_image_0888.jpg', 'Amphibia_image_0800.jpg', 'Amphibia_image_0717.jpg', 'Amphibia_image_0280.jpg', 'Amphibia_image_0794.jpg', 'Amphibia_image_0565.jpg', 'Amphibia_image_0628.jpg', 'Amphibia_image_0191.jpg', 'Amphibia_image_0559.jpg', 'Amphibia_image_0799.jpg', 'Amphibia_image_0117.jpg', 'Amphibia_image_0394.jpg', 'Amphibia_image_0132.jpg', 'Amphibia_image_0816.jpg', 'Amphibia_image_0461.jpg', 'Amphibia_image_0141.jpg', 'Amphibia_image_0585.jpg', 'Amphibia_image_0121.jpg', 'Amphibia_image_0987.jpg', 'Amphibia_image_0442.jpg', 'Amphibia_image_0707.jpg', 'Amphibia_image_0519.jpg', 'Amphibia_image_0400.jpg', 'Amphibia_image_0591.jpg', 'Amphibia_image_0957.jpg', 'Amphibia_image_0513.jpg', 'Amphibia_image_0396.jpg', 'Amphibia_image_0650.jpg', 'Amphibia_image_0704.jpg', 'Amphibia_image_0665.jpg', 'Amphibia_image_0754.jpg', 'Amphibia_image_0646.jpg', 'Amphibia_image_0313.jpg', 'Amphibia_image_0473.jpg', 'Amphibia_image_0575.jpg', 'Amphibia_image_0705.jpg', 'Amphibia_image_0557.jpg', 'Amphibia_image_0666.jpg', 'Amphibia_image_0834.jpg', 'Amphibia_image_0693.jpg', 'Amphibia_image_0958.jpg', 'Amphibia_image_0468.jpg', 'Amphibia_image_0899.jpg', 'Amphibia_image_0282.jpg', 'Amphibia_image_0786.jpg', 'Amphibia_image_0932.jpg', 'Amphibia_image_0007.jpg', 'Amphibia_image_0316.jpg', 'Amphibia_image_0259.jpg', 'Amphibia_image_0406.jpg', 'Amphibia_image_0982.jpg', 'Amphibia_image_0145.jpg', 'Amphibia_image_0107.jpg', 'Amphibia_image_0649.jpg', 'Amphibia_image_0370.jpg', 'Amphibia_image_0068.jpg', 'Amphibia_image_0701.jpg', 'Amphibia_image_0006.jpg', 'Amphibia_image_0071.jpg', 'Amphibia_image_0341.jpg', 'Amphibia_image_0182.jpg', 'Amphibia_image_0423.jpg', 'Amphibia_image_0490.jpg', 'Amphibia_image_0946.jpg', 'Amphibia_image_0647.jpg', 'Amphibia_image_0787.jpg', 'Amphibia_image_0922.jpg', 'Amphibia_image_0043.jpg', 'Amphibia_image_0835.jpg', 'Amphibia_image_0369.jpg', 'Amphibia_image_0487.jpg', 'Amphibia_image_0344.jpg', 'Amphibia_image_0481.jpg', 'Amphibia_image_0399.jpg', 'Amphibia_image_0057.jpg', 'Amphibia_image_0319.jpg', 'Amphibia_image_0555.jpg', 'Amphibia_image_0973.jpg', 'Amphibia_image_0639.jpg', 'Amphibia_image_0491.jpg', 'Amphibia_image_0774.jpg', 'Amphibia_image_0975.jpg', 'Amphibia_image_0323.jpg', 'Amphibia_image_0455.jpg', 'Amphibia_image_0160.jpg', 'Amphibia_image_0308.jpg', 'Amphibia_image_0381.jpg', 'Amphibia_image_0804.jpg', 'Amphibia_image_0545.jpg', 'Amphibia_image_0101.jpg', 'Amphibia_image_0020.jpg', 'Amphibia_image_0228.jpg', 'Amphibia_image_0235.jpg', 'Amphibia_image_0154.jpg', 'Amphibia_image_0199.jpg', 'Amphibia_image_0464.jpg', 'Amphibia_image_0216.jpg', 'Amphibia_image_0636.jpg', 'Amphibia_image_0710.jpg', 'Amphibia_image_0233.jpg', 'Amphibia_image_0087.jpg', 'Amphibia_image_0788.jpg', 'Amphibia_image_0916.jpg', 'Amphibia_image_0977.jpg', 'Amphibia_image_0248.jpg', 'Amphibia_image_0542.jpg', 'Amphibia_image_0582.jpg', 'Amphibia_image_0871.jpg', 'Amphibia_image_0782.jpg', 'Amphibia_image_0320.jpg', 'Amphibia_image_0385.jpg', 'Amphibia_image_0561.jpg', 'Amphibia_image_0601.jpg', 'Amphibia_image_0506.jpg', 'Amphibia_image_0681.jpg', 'Amphibia_image_0978.jpg', 'Amphibia_image_0311.jpg', 'Amphibia_image_0412.jpg', 'Amphibia_image_0738.jpg', 'Amphibia_image_1000.jpg', 'Amphibia_image_0389.jpg', 'Amphibia_image_0547.jpg', 'Amphibia_image_0161.jpg', 'Amphibia_image_0183.jpg', 'Amphibia_image_0740.jpg', 'Amphibia_image_0867.jpg', 'Amphibia_image_0603.jpg', 'Amphibia_image_0013.jpg', 'Amphibia_image_0174.jpg', 'Amphibia_image_0622.jpg', 'Amphibia_image_0044.jpg', 'Amphibia_image_0206.jpg', 'Amphibia_image_0293.jpg', 'Amphibia_image_0326.jpg', 'Amphibia_image_0086.jpg', 'Amphibia_image_0176.jpg', 'Amphibia_image_0192.jpg', 'Amphibia_image_0357.jpg', 'Amphibia_image_0349.jpg', 'Amphibia_image_0797.jpg', 'Amphibia_image_0404.jpg', 'Amphibia_image_0083.jpg', 'Amphibia_image_0588.jpg', 'Amphibia_image_0111.jpg', 'Amphibia_image_0028.jpg']\n","output_type":"stream"}],"execution_count":3},{"cell_type":"code","source":"# Data transformations\ntrain_transforms = transforms.Compose([\n    transforms.Resize((224, 224)),  # Resize images for pretrained models\n    transforms.RandomHorizontalFlip(),\n    transforms.RandomRotation(10),\n    transforms.ToTensor(),\n    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # Normalize to match ImageNet stats\n])\n\ntest_transforms = transforms.Compose([\n    transforms.Resize((224, 224)),\n    transforms.ToTensor(),\n    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])\n])","metadata":{"trusted":true,"execution":{"iopub.status.busy":"2024-11-24T11:45:07.356522Z","iopub.execute_input":"2024-11-24T11:45:07.357618Z","iopub.status.idle":"2024-11-24T11:45:07.364484Z","shell.execute_reply.started":"2024-11-24T11:45:07.357573Z","shell.execute_reply":"2024-11-24T11:45:07.363257Z"}},"outputs":[],"execution_count":4},{"cell_type":"code","source":"class AnimalPlantDataset(Dataset):\n    def __init__(self, image_paths, labels=None, transform=None):\n        self.image_paths = image_paths\n        self.labels = labels\n        self.transform = transform\n\n    def __len__(self):\n        return len(self.image_paths)\n\n    def __getitem__(self, idx):\n        img_path = self.image_paths[idx]\n        image = Image.open(img_path).convert('RGB')  # Open image and ensure 3 channels\n\n        if self.transform:\n            image = self.transform(image)\n        \n        if self.labels is not None:\n            label = self.labels[idx]\n            return image, label\n        else:\n            return image","metadata":{"trusted":true,"execution":{"iopub.status.busy":"2024-11-24T11:45:27.215442Z","iopub.execute_input":"2024-11-24T11:45:27.216896Z","iopub.status.idle":"2024-11-24T11:45:27.223490Z","shell.execute_reply.started":"2024-11-24T11:45:27.216850Z","shell.execute_reply":"2024-11-24T11:45:27.222359Z"}},"outputs":[],"execution_count":5},{"cell_type":"code","source":"from PIL import Image\n\n# Load train images and labels\nclasses = os.listdir(train_dir)  # Folder names are class labels\nclass_to_idx = {cls: idx for idx, cls in enumerate(classes)}  # Map class names to indices\n\nimage_paths, labels = [], []\n\nfor cls in classes:\n    cls_path = os.path.join(train_dir, cls)\n    for img_name in os.listdir(cls_path):\n        image_paths.append(os.path.join(cls_path, img_name))\n        labels.append(class_to_idx[cls])\n\n# Split train data into training and validation\ntrain_paths, val_paths, train_labels, val_labels = train_test_split(\n    image_paths, labels, test_size=0.2, random_state=42\n)\n\ntrain_dataset = AnimalPlantDataset(train_paths, train_labels, transform=train_transforms)\nval_dataset = AnimalPlantDataset(val_paths, val_labels, transform=test_transforms)\n\n# Load test data\ntest_paths = [os.path.join(test_dir, img_name) for img_name in os.listdir(test_dir)]\ntest_dataset = AnimalPlantDataset(test_paths, transform=test_transforms)\n\n# DataLoaders\nbatch_size = 32\n\ntrain_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)\nval_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)\ntest_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)\n","metadata":{"trusted":true,"execution":{"iopub.status.busy":"2024-11-24T11:45:56.520936Z","iopub.execute_input":"2024-11-24T11:45:56.521357Z","iopub.status.idle":"2024-11-24T11:45:56.711985Z","shell.execute_reply.started":"2024-11-24T11:45:56.521323Z","shell.execute_reply":"2024-11-24T11:45:56.710539Z"}},"outputs":[],"execution_count":6},{"cell_type":"code","source":"device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\n\n# Load a pretrained ResNet model\nmodel = models.resnet50(pretrained=True)\n\n# Replace the final layer for 10 classes\nnum_features = model.fc.in_features\nmodel.fc = torch.nn.Linear(num_features, 10)\nmodel = model.to(device)\n","metadata":{"trusted":true,"execution":{"iopub.status.busy":"2024-11-24T11:46:14.137090Z","iopub.execute_input":"2024-11-24T11:46:14.137492Z","iopub.status.idle":"2024-11-24T11:46:15.450051Z","shell.execute_reply.started":"2024-11-24T11:46:14.137459Z","shell.execute_reply":"2024-11-24T11:46:15.448986Z"}},"outputs":[{"name":"stderr","text":"/opt/conda/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.\n  warnings.warn(\n/opt/conda/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=ResNet50_Weights.IMAGENET1K_V1`. You can also use `weights=ResNet50_Weights.DEFAULT` to get the most up-to-date weights.\n  warnings.warn(msg)\nDownloading: \"https://download.pytorch.org/models/resnet50-0676ba61.pth\" to /root/.cache/torch/hub/checkpoints/resnet50-0676ba61.pth\n100%|██████████| 97.8M/97.8M [00:00<00:00, 179MB/s]\n","output_type":"stream"}],"execution_count":7},{"cell_type":"code","source":"from torch.optim import Adam\nfrom torch.optim.lr_scheduler import StepLR\nfrom torch.nn import CrossEntropyLoss\n\ncriterion = CrossEntropyLoss()\noptimizer = Adam(model.parameters(), lr=0.001)\nscheduler = StepLR(optimizer, step_size=5, gamma=0.1)  # Reduce learning rate after every 5 epochs","metadata":{"trusted":true,"execution":{"iopub.status.busy":"2024-11-24T11:46:40.025234Z","iopub.execute_input":"2024-11-24T11:46:40.025647Z","iopub.status.idle":"2024-11-24T11:46:40.033013Z","shell.execute_reply.started":"2024-11-24T11:46:40.025610Z","shell.execute_reply":"2024-11-24T11:46:40.031810Z"}},"outputs":[],"execution_count":8},{"cell_type":"code","source":"def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs=10):\n    best_f1 = 0.0\n    \n    for epoch in range(num_epochs):\n        print(f\"Epoch {epoch+1}/{num_epochs}\")\n        \n        # Training phase\n        model.train()\n        train_loss = 0.0\n        train_correct = 0\n        train_total = 0\n        \n        for images, labels in train_loader:\n            images, labels = images.to(device), labels.to(device)\n            \n            optimizer.zero_grad()\n            outputs = model(images)\n            loss = criterion(outputs, labels)\n            loss.backward()\n            optimizer.step()\n            \n            train_loss += loss.item()\n            _, preds = torch.max(outputs, 1)\n            train_correct += (preds == labels).sum().item()\n            train_total += labels.size(0)\n        \n        train_acc = train_correct / train_total\n        \n        # Validation phase\n        model.eval()\n        val_loss = 0.0\n        val_correct = 0\n        val_total = 0\n        val_preds = []\n        val_targets = []\n        \n        with torch.no_grad():\n            for images, labels in val_loader:\n                images, labels = images.to(device), labels.to(device)\n                outputs = model(images)\n                loss = criterion(outputs, labels)\n                \n                val_loss += loss.item()\n                _, preds = torch.max(outputs, 1)\n                val_correct += (preds == labels).sum().item()\n                val_total += labels.size(0)\n                val_preds.extend(preds.cpu().numpy())\n                val_targets.extend(labels.cpu().numpy())\n        \n        val_acc = val_correct / val_total\n        \n        # Calculate F1 score\n        from sklearn.metrics import f1_score\n        val_f1 = f1_score(val_targets, val_preds, average='weighted')\n        \n        print(f\"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}\")\n        print(f\"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, Val F1: {val_f1:.4f}\")\n        \n        if val_f1 > best_f1:\n            best_f1 = val_f1\n            torch.save(model.state_dict(), 'best_model.pth')  # Save the best model\n        \n        scheduler.step()\n\n    print(\"Training Complete. Best F1 Score:\", best_f1)\n","metadata":{"trusted":true,"execution":{"iopub.status.busy":"2024-11-24T11:46:55.483933Z","iopub.execute_input":"2024-11-24T11:46:55.484427Z","iopub.status.idle":"2024-11-24T11:46:55.502462Z","shell.execute_reply.started":"2024-11-24T11:46:55.484375Z","shell.execute_reply":"2024-11-24T11:46:55.501162Z"}},"outputs":[],"execution_count":9},{"cell_type":"code","source":"train_model(model, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs=10)","metadata":{"trusted":true,"execution":{"iopub.status.busy":"2024-11-24T11:47:14.239858Z","iopub.execute_input":"2024-11-24T11:47:14.240552Z"}},"outputs":[{"name":"stdout","text":"Epoch 1/10\nTrain Loss: 516.6495, Train Acc: 0.2638\nVal Loss: 129.6023, Val Acc: 0.3180, Val F1: 0.3075\nEpoch 2/10\nTrain Loss: 449.7871, Train Acc: 0.3660\nVal Loss: 113.8274, Val Acc: 0.3845, Val F1: 0.3609\nEpoch 3/10\n","output_type":"stream"}],"execution_count":null},{"cell_type":"code","source":"# Load the best model\nmodel.load_state_dict(torch.load('best_model.pth'))\n\n# Predict on test data\nmodel.eval()\ntest_preds = []\n\nwith torch.no_grad():\n    for images in test_loader:\n        images = images.to(device)\n        outputs = model(images)\n        _, preds = torch.max(outputs, 1)\n        test_preds.extend(preds.cpu().numpy())\n\n# Save predictions to CSV\nsubmission = pd.DataFrame({\n    'Image_ID': [os.path.basename(p).split('.')[0] for p in test_paths],\n    'Label': test_preds\n})\nsubmission.to_csv('submission.csv', index=False)","metadata":{"trusted":true},"outputs":[],"execution_count":null}]}
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "45a3e5cb",
+   "metadata": {
+    "_cell_guid": "b1076dfc-b9ad-4769-8c92-a6c4dae69d19",
+    "_uuid": "8f2839f25d086af736a60e9eeb907d3b93b6e0e5",
+    "execution": {
+     "iopub.execute_input": "2024-11-24T18:07:59.563505Z",
+     "iopub.status.busy": "2024-11-24T18:07:59.562345Z",
+     "iopub.status.idle": "2024-11-24T18:08:07.786689Z",
+     "shell.execute_reply": "2024-11-24T18:08:07.785614Z"
+    },
+    "papermill": {
+     "duration": 8.232806,
+     "end_time": "2024-11-24T18:08:07.789562",
+     "exception": false,
+     "start_time": "2024-11-24T18:07:59.556756",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "import os\n",
+    "import torch\n",
+    "from torch.utils.data import DataLoader, Dataset\n",
+    "from torchvision import datasets, transforms, models\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "import pandas as pd\n",
+    "import numpy as np\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "d2411c75",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-24T18:08:07.798719Z",
+     "iopub.status.busy": "2024-11-24T18:08:07.797897Z",
+     "iopub.status.idle": "2024-11-24T18:08:07.804415Z",
+     "shell.execute_reply": "2024-11-24T18:08:07.802847Z"
+    },
+    "papermill": {
+     "duration": 0.013809,
+     "end_time": "2024-11-24T18:08:07.806958",
+     "exception": false,
+     "start_time": "2024-11-24T18:08:07.793149",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "# Paths to the dataset\n",
+    "train_dir = '/kaggle/input/deep-learning-practice-image-classification/train'\n",
+    "test_dir = '/kaggle/input/deep-learning-practice-image-classification/test'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "59ff2a97",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-24T18:08:07.815961Z",
+     "iopub.status.busy": "2024-11-24T18:08:07.815169Z",
+     "iopub.status.idle": "2024-11-24T18:08:07.840676Z",
+     "shell.execute_reply": "2024-11-24T18:08:07.839494Z"
+    },
+    "papermill": {
+     "duration": 0.033771,
+     "end_time": "2024-11-24T18:08:07.844281",
+     "exception": false,
+     "start_time": "2024-11-24T18:08:07.810510",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "['Reptilia', 'Animalia', 'Arachnida', 'Amphibia', 'Aves', 'Mollusca', 'Fungi', 'Insecta', 'Plantae', 'Mammalia']\n",
+      "['Amphibia_image_0627.jpg', 'Amphibia_image_0214.jpg', 'Amphibia_image_0197.jpg', 'Amphibia_image_0079.jpg', 'Amphibia_image_0503.jpg', 'Amphibia_image_0110.jpg', 'Amphibia_image_0277.jpg', 'Amphibia_image_0942.jpg', 'Amphibia_image_0909.jpg', 'Amphibia_image_0024.jpg', 'Amphibia_image_0100.jpg', 'Amphibia_image_0286.jpg', 'Amphibia_image_0023.jpg', 'Amphibia_image_0884.jpg', 'Amphibia_image_0066.jpg', 'Amphibia_image_0377.jpg', 'Amphibia_image_0630.jpg', 'Amphibia_image_0775.jpg', 'Amphibia_image_0072.jpg', 'Amphibia_image_0195.jpg', 'Amphibia_image_0089.jpg', 'Amphibia_image_0829.jpg', 'Amphibia_image_0928.jpg', 'Amphibia_image_0574.jpg', 'Amphibia_image_0091.jpg', 'Amphibia_image_0179.jpg', 'Amphibia_image_0870.jpg', 'Amphibia_image_0019.jpg', 'Amphibia_image_0634.jpg', 'Amphibia_image_0783.jpg', 'Amphibia_image_0939.jpg', 'Amphibia_image_0677.jpg', 'Amphibia_image_0925.jpg', 'Amphibia_image_0764.jpg', 'Amphibia_image_0616.jpg', 'Amphibia_image_0477.jpg', 'Amphibia_image_0046.jpg', 'Amphibia_image_0221.jpg', 'Amphibia_image_0549.jpg', 'Amphibia_image_0226.jpg', 'Amphibia_image_0240.jpg', 'Amphibia_image_0731.jpg', 'Amphibia_image_0164.jpg', 'Amphibia_image_0729.jpg', 'Amphibia_image_0518.jpg', 'Amphibia_image_0485.jpg', 'Amphibia_image_0562.jpg', 'Amphibia_image_0014.jpg', 'Amphibia_image_0807.jpg', 'Amphibia_image_0833.jpg', 'Amphibia_image_0997.jpg', 'Amphibia_image_0380.jpg', 'Amphibia_image_0076.jpg', 'Amphibia_image_0012.jpg', 'Amphibia_image_0244.jpg', 'Amphibia_image_0692.jpg', 'Amphibia_image_0058.jpg', 'Amphibia_image_0857.jpg', 'Amphibia_image_0441.jpg', 'Amphibia_image_0310.jpg', 'Amphibia_image_0826.jpg', 'Amphibia_image_0222.jpg', 'Amphibia_image_0301.jpg', 'Amphibia_image_0135.jpg', 'Amphibia_image_0189.jpg', 'Amphibia_image_0608.jpg', 'Amphibia_image_0314.jpg', 'Amphibia_image_0964.jpg', 'Amphibia_image_0129.jpg', 'Amphibia_image_0284.jpg', 'Amphibia_image_0074.jpg', 'Amphibia_image_0251.jpg', 'Amphibia_image_0256.jpg', 'Amphibia_image_0556.jpg', 'Amphibia_image_0680.jpg', 'Amphibia_image_0405.jpg', 'Amphibia_image_0934.jpg', 'Amphibia_image_0063.jpg', 'Amphibia_image_0512.jpg', 'Amphibia_image_0291.jpg', 'Amphibia_image_0523.jpg', 'Amphibia_image_0078.jpg', 'Amphibia_image_0951.jpg', 'Amphibia_image_0376.jpg', 'Amphibia_image_0918.jpg', 'Amphibia_image_0739.jpg', 'Amphibia_image_0329.jpg', 'Amphibia_image_0035.jpg', 'Amphibia_image_0869.jpg', 'Amphibia_image_0075.jpg', 'Amphibia_image_0597.jpg', 'Amphibia_image_0281.jpg', 'Amphibia_image_0215.jpg', 'Amphibia_image_0390.jpg', 'Amphibia_image_0203.jpg', 'Amphibia_image_0360.jpg', 'Amphibia_image_0983.jpg', 'Amphibia_image_0798.jpg', 'Amphibia_image_0594.jpg', 'Amphibia_image_0224.jpg', 'Amphibia_image_0318.jpg', 'Amphibia_image_0971.jpg', 'Amphibia_image_0397.jpg', 'Amphibia_image_0196.jpg', 'Amphibia_image_0759.jpg', 'Amphibia_image_0790.jpg', 'Amphibia_image_0408.jpg', 'Amphibia_image_0338.jpg', 'Amphibia_image_0980.jpg', 'Amphibia_image_0018.jpg', 'Amphibia_image_0017.jpg', 'Amphibia_image_0085.jpg', 'Amphibia_image_0427.jpg', 'Amphibia_image_0416.jpg', 'Amphibia_image_0099.jpg', 'Amphibia_image_0070.jpg', 'Amphibia_image_0348.jpg', 'Amphibia_image_0828.jpg', 'Amphibia_image_0926.jpg', 'Amphibia_image_0793.jpg', 'Amphibia_image_0752.jpg', 'Amphibia_image_0755.jpg', 'Amphibia_image_0315.jpg', 'Amphibia_image_0842.jpg', 'Amphibia_image_0949.jpg', 'Amphibia_image_0345.jpg', 'Amphibia_image_0409.jpg', 'Amphibia_image_0653.jpg', 'Amphibia_image_0872.jpg', 'Amphibia_image_0766.jpg', 'Amphibia_image_0859.jpg', 'Amphibia_image_0953.jpg', 'Amphibia_image_0773.jpg', 'Amphibia_image_0873.jpg', 'Amphibia_image_0073.jpg', 'Amphibia_image_0061.jpg', 'Amphibia_image_0225.jpg', 'Amphibia_image_0998.jpg', 'Amphibia_image_0289.jpg', 'Amphibia_image_0347.jpg', 'Amphibia_image_0550.jpg', 'Amphibia_image_0260.jpg', 'Amphibia_image_0850.jpg', 'Amphibia_image_0188.jpg', 'Amphibia_image_0462.jpg', 'Amphibia_image_0959.jpg', 'Amphibia_image_0824.jpg', 'Amphibia_image_0501.jpg', 'Amphibia_image_0517.jpg', 'Amphibia_image_0955.jpg', 'Amphibia_image_0698.jpg', 'Amphibia_image_0383.jpg', 'Amphibia_image_0054.jpg', 'Amphibia_image_0223.jpg', 'Amphibia_image_0022.jpg', 'Amphibia_image_0167.jpg', 'Amphibia_image_0456.jpg', 'Amphibia_image_0025.jpg', 'Amphibia_image_0748.jpg', 'Amphibia_image_0541.jpg', 'Amphibia_image_0157.jpg', 'Amphibia_image_0919.jpg', 'Amphibia_image_0185.jpg', 'Amphibia_image_0010.jpg', 'Amphibia_image_0878.jpg', 'Amphibia_image_0459.jpg', 'Amphibia_image_0715.jpg', 'Amphibia_image_0509.jpg', 'Amphibia_image_0741.jpg', 'Amphibia_image_0424.jpg', 'Amphibia_image_0805.jpg', 'Amphibia_image_0812.jpg', 'Amphibia_image_0309.jpg', 'Amphibia_image_0579.jpg', 'Amphibia_image_0947.jpg', 'Amphibia_image_0150.jpg', 'Amphibia_image_0488.jpg', 'Amphibia_image_0472.jpg', 'Amphibia_image_0843.jpg', 'Amphibia_image_0418.jpg', 'Amphibia_image_0625.jpg', 'Amphibia_image_0366.jpg', 'Amphibia_image_0825.jpg', 'Amphibia_image_0497.jpg', 'Amphibia_image_0651.jpg', 'Amphibia_image_0469.jpg', 'Amphibia_image_0116.jpg', 'Amphibia_image_0060.jpg', 'Amphibia_image_0685.jpg', 'Amphibia_image_0683.jpg', 'Amphibia_image_0131.jpg', 'Amphibia_image_0893.jpg', 'Amphibia_image_0769.jpg', 'Amphibia_image_0796.jpg', 'Amphibia_image_0631.jpg', 'Amphibia_image_0876.jpg', 'Amphibia_image_0096.jpg', 'Amphibia_image_0583.jpg', 'Amphibia_image_0480.jpg', 'Amphibia_image_0173.jpg', 'Amphibia_image_0331.jpg', 'Amphibia_image_0663.jpg', 'Amphibia_image_0864.jpg', 'Amphibia_image_0059.jpg', 'Amphibia_image_0365.jpg', 'Amphibia_image_0858.jpg', 'Amphibia_image_0933.jpg', 'Amphibia_image_0785.jpg', 'Amphibia_image_0005.jpg', 'Amphibia_image_0337.jpg', 'Amphibia_image_0471.jpg', 'Amphibia_image_0844.jpg', 'Amphibia_image_0856.jpg', 'Amphibia_image_0721.jpg', 'Amphibia_image_0231.jpg', 'Amphibia_image_0836.jpg', 'Amphibia_image_0147.jpg', 'Amphibia_image_0420.jpg', 'Amphibia_image_0328.jpg', 'Amphibia_image_0900.jpg', 'Amphibia_image_0770.jpg', 'Amphibia_image_0130.jpg', 'Amphibia_image_0288.jpg', 'Amphibia_image_0493.jpg', 'Amphibia_image_0837.jpg', 'Amphibia_image_0756.jpg', 'Amphibia_image_0820.jpg', 'Amphibia_image_0629.jpg', 'Amphibia_image_0994.jpg', 'Amphibia_image_0120.jpg', 'Amphibia_image_0363.jpg', 'Amphibia_image_0387.jpg', 'Amphibia_image_0435.jpg', 'Amphibia_image_0492.jpg', 'Amphibia_image_0581.jpg', 'Amphibia_image_0730.jpg', 'Amphibia_image_0576.jpg', 'Amphibia_image_0172.jpg', 'Amphibia_image_0587.jpg', 'Amphibia_image_0094.jpg', 'Amphibia_image_0520.jpg', 'Amphibia_image_0335.jpg', 'Amphibia_image_0332.jpg', 'Amphibia_image_0274.jpg', 'Amphibia_image_0500.jpg', 'Amphibia_image_0303.jpg', 'Amphibia_image_0317.jpg', 'Amphibia_image_0374.jpg', 'Amphibia_image_0521.jpg', 'Amphibia_image_0467.jpg', 'Amphibia_image_0792.jpg', 'Amphibia_image_0598.jpg', 'Amphibia_image_0640.jpg', 'Amphibia_image_0144.jpg', 'Amphibia_image_0133.jpg', 'Amphibia_image_0302.jpg', 'Amphibia_image_0827.jpg', 'Amphibia_image_0687.jpg', 'Amphibia_image_0428.jpg', 'Amphibia_image_0448.jpg', 'Amphibia_image_0056.jpg', 'Amphibia_image_0944.jpg', 'Amphibia_image_0178.jpg', 'Amphibia_image_0264.jpg', 'Amphibia_image_0924.jpg', 'Amphibia_image_0294.jpg', 'Amphibia_image_0106.jpg', 'Amphibia_image_0672.jpg', 'Amphibia_image_0321.jpg', 'Amphibia_image_0033.jpg', 'Amphibia_image_0422.jpg', 'Amphibia_image_0709.jpg', 'Amphibia_image_0711.jpg', 'Amphibia_image_0077.jpg', 'Amphibia_image_0253.jpg', 'Amphibia_image_0602.jpg', 'Amphibia_image_0902.jpg', 'Amphibia_image_0128.jpg', 'Amphibia_image_0589.jpg', 'Amphibia_image_0421.jpg', 'Amphibia_image_0940.jpg', 'Amphibia_image_0571.jpg', 'Amphibia_image_0252.jpg', 'Amphibia_image_0401.jpg', 'Amphibia_image_0830.jpg', 'Amphibia_image_0411.jpg', 'Amphibia_image_0443.jpg', 'Amphibia_image_0892.jpg', 'Amphibia_image_0148.jpg', 'Amphibia_image_0249.jpg', 'Amphibia_image_0626.jpg', 'Amphibia_image_0593.jpg', 'Amphibia_image_0245.jpg', 'Amphibia_image_0847.jpg', 'Amphibia_image_0927.jpg', 'Amphibia_image_0393.jpg', 'Amphibia_image_0257.jpg', 'Amphibia_image_0991.jpg', 'Amphibia_image_0458.jpg', 'Amphibia_image_0307.jpg', 'Amphibia_image_0806.jpg', 'Amphibia_image_0378.jpg', 'Amphibia_image_0082.jpg', 'Amphibia_image_0237.jpg', 'Amphibia_image_0062.jpg', 'Amphibia_image_0292.jpg', 'Amphibia_image_0694.jpg', 'Amphibia_image_0287.jpg', 'Amphibia_image_0851.jpg', 'Amphibia_image_0362.jpg', 'Amphibia_image_0146.jpg', 'Amphibia_image_0103.jpg', 'Amphibia_image_0970.jpg', 'Amphibia_image_0297.jpg', 'Amphibia_image_0402.jpg', 'Amphibia_image_0930.jpg', 'Amphibia_image_0690.jpg', 'Amphibia_image_0429.jpg', 'Amphibia_image_0515.jpg', 'Amphibia_image_0296.jpg', 'Amphibia_image_0684.jpg', 'Amphibia_image_0255.jpg', 'Amphibia_image_0219.jpg', 'Amphibia_image_0108.jpg', 'Amphibia_image_0600.jpg', 'Amphibia_image_0403.jpg', 'Amphibia_image_0720.jpg', 'Amphibia_image_0612.jpg', 'Amphibia_image_0425.jpg', 'Amphibia_image_0175.jpg', 'Amphibia_image_0446.jpg', 'Amphibia_image_0124.jpg', 'Amphibia_image_0941.jpg', 'Amphibia_image_0004.jpg', 'Amphibia_image_0118.jpg', 'Amphibia_image_0716.jpg', 'Amphibia_image_0384.jpg', 'Amphibia_image_0966.jpg', 'Amphibia_image_0623.jpg', 'Amphibia_image_0950.jpg', 'Amphibia_image_0595.jpg', 'Amphibia_image_0732.jpg', 'Amphibia_image_0527.jpg', 'Amphibia_image_0776.jpg', 'Amphibia_image_0159.jpg', 'Amphibia_image_0290.jpg', 'Amphibia_image_0457.jpg', 'Amphibia_image_0762.jpg', 'Amphibia_image_0990.jpg', 'Amphibia_image_0526.jpg', 'Amphibia_image_0395.jpg', 'Amphibia_image_0917.jpg', 'Amphibia_image_0745.jpg', 'Amphibia_image_0580.jpg', 'Amphibia_image_0210.jpg', 'Amphibia_image_0449.jpg', 'Amphibia_image_0330.jpg', 'Amphibia_image_0661.jpg', 'Amphibia_image_0502.jpg', 'Amphibia_image_0042.jpg', 'Amphibia_image_0388.jpg', 'Amphibia_image_0912.jpg', 'Amphibia_image_0032.jpg', 'Amphibia_image_0914.jpg', 'Amphibia_image_0578.jpg', 'Amphibia_image_0777.jpg', 'Amphibia_image_0166.jpg', 'Amphibia_image_0993.jpg', 'Amphibia_image_0158.jpg', 'Amphibia_image_0643.jpg', 'Amphibia_image_0645.jpg', 'Amphibia_image_0090.jpg', 'Amphibia_image_0921.jpg', 'Amphibia_image_0570.jpg', 'Amphibia_image_0350.jpg', 'Amphibia_image_0674.jpg', 'Amphibia_image_0832.jpg', 'Amphibia_image_0823.jpg', 'Amphibia_image_0113.jpg', 'Amphibia_image_0801.jpg', 'Amphibia_image_0200.jpg', 'Amphibia_image_0413.jpg', 'Amphibia_image_0069.jpg', 'Amphibia_image_0052.jpg', 'Amphibia_image_0306.jpg', 'Amphibia_image_0999.jpg', 'Amphibia_image_0229.jpg', 'Amphibia_image_0356.jpg', 'Amphibia_image_0686.jpg', 'Amphibia_image_0813.jpg', 'Amphibia_image_0064.jpg', 'Amphibia_image_0433.jpg', 'Amphibia_image_0372.jpg', 'Amphibia_image_0364.jpg', 'Amphibia_image_0168.jpg', 'Amphibia_image_0972.jpg', 'Amphibia_image_0450.jpg', 'Amphibia_image_0554.jpg', 'Amphibia_image_0838.jpg', 'Amphibia_image_0359.jpg', 'Amphibia_image_0343.jpg', 'Amphibia_image_0803.jpg', 'Amphibia_image_0712.jpg', 'Amphibia_image_0212.jpg', 'Amphibia_image_0761.jpg', 'Amphibia_image_0621.jpg', 'Amphibia_image_0484.jpg', 'Amphibia_image_0254.jpg', 'Amphibia_image_0985.jpg', 'Amphibia_image_0751.jpg', 'Amphibia_image_0911.jpg', 'Amphibia_image_0156.jpg', 'Amphibia_image_0540.jpg', 'Amphibia_image_0081.jpg', 'Amphibia_image_0992.jpg', 'Amphibia_image_0861.jpg', 'Amphibia_image_0208.jpg', 'Amphibia_image_0708.jpg', 'Amphibia_image_0482.jpg', 'Amphibia_image_0171.jpg', 'Amphibia_image_0699.jpg', 'Amphibia_image_0889.jpg', 'Amphibia_image_0638.jpg', 'Amphibia_image_0952.jpg', 'Amphibia_image_0723.jpg', 'Amphibia_image_0207.jpg', 'Amphibia_image_0534.jpg', 'Amphibia_image_0995.jpg', 'Amphibia_image_0543.jpg', 'Amphibia_image_0702.jpg', 'Amphibia_image_0811.jpg', 'Amphibia_image_0234.jpg', 'Amphibia_image_0136.jpg', 'Amphibia_image_0193.jpg', 'Amphibia_image_0250.jpg', 'Amphibia_image_0095.jpg', 'Amphibia_image_0276.jpg', 'Amphibia_image_0682.jpg', 'Amphibia_image_0697.jpg', 'Amphibia_image_0227.jpg', 'Amphibia_image_0194.jpg', 'Amphibia_image_0169.jpg', 'Amphibia_image_0822.jpg', 'Amphibia_image_0351.jpg', 'Amphibia_image_0134.jpg', 'Amphibia_image_0152.jpg', 'Amphibia_image_0453.jpg', 'Amphibia_image_0109.jpg', 'Amphibia_image_0669.jpg', 'Amphibia_image_0818.jpg', 'Amphibia_image_0724.jpg', 'Amphibia_image_0592.jpg', 'Amphibia_image_0772.jpg', 'Amphibia_image_0339.jpg', 'Amphibia_image_0863.jpg', 'Amphibia_image_0426.jpg', 'Amphibia_image_0875.jpg', 'Amphibia_image_0505.jpg', 'Amphibia_image_0671.jpg', 'Amphibia_image_0883.jpg', 'Amphibia_image_0436.jpg', 'Amphibia_image_0767.jpg', 'Amphibia_image_0719.jpg', 'Amphibia_image_0819.jpg', 'Amphibia_image_0037.jpg', 'Amphibia_image_0430.jpg', 'Amphibia_image_0607.jpg', 'Amphibia_image_0238.jpg', 'Amphibia_image_0615.jpg', 'Amphibia_image_0445.jpg', 'Amphibia_image_0268.jpg', 'Amphibia_image_0463.jpg', 'Amphibia_image_0596.jpg', 'Amphibia_image_0165.jpg', 'Amphibia_image_0368.jpg', 'Amphibia_image_0817.jpg', 'Amphibia_image_0948.jpg', 'Amphibia_image_0609.jpg', 'Amphibia_image_0714.jpg', 'Amphibia_image_0142.jpg', 'Amphibia_image_0474.jpg', 'Amphibia_image_0572.jpg', 'Amphibia_image_0324.jpg', 'Amphibia_image_0051.jpg', 'Amphibia_image_0791.jpg', 'Amphibia_image_0852.jpg', 'Amphibia_image_0901.jpg', 'Amphibia_image_0386.jpg', 'Amphibia_image_0123.jpg', 'Amphibia_image_0573.jpg', 'Amphibia_image_0722.jpg', 'Amphibia_image_0437.jpg', 'Amphibia_image_0530.jpg', 'Amphibia_image_0742.jpg', 'Amphibia_image_0890.jpg', 'Amphibia_image_0236.jpg', 'Amphibia_image_0495.jpg', 'Amphibia_image_0217.jpg', 'Amphibia_image_0522.jpg', 'Amphibia_image_0897.jpg', 'Amphibia_image_0780.jpg', 'Amphibia_image_0451.jpg', 'Amphibia_image_0211.jpg', 'Amphibia_image_0821.jpg', 'Amphibia_image_0262.jpg', 'Amphibia_image_0149.jpg', 'Amphibia_image_0438.jpg', 'Amphibia_image_0734.jpg', 'Amphibia_image_0003.jpg', 'Amphibia_image_0163.jpg', 'Amphibia_image_0968.jpg', 'Amphibia_image_0789.jpg', 'Amphibia_image_0553.jpg', 'Amphibia_image_0700.jpg', 'Amphibia_image_0881.jpg', 'Amphibia_image_0763.jpg', 'Amphibia_image_0779.jpg', 'Amphibia_image_0239.jpg', 'Amphibia_image_0599.jpg', 'Amphibia_image_0533.jpg', 'Amphibia_image_0209.jpg', 'Amphibia_image_0795.jpg', 'Amphibia_image_0354.jpg', 'Amphibia_image_0996.jpg', 'Amphibia_image_0419.jpg', 'Amphibia_image_0840.jpg', 'Amphibia_image_0619.jpg', 'Amphibia_image_0258.jpg', 'Amphibia_image_0080.jpg', 'Amphibia_image_0162.jpg', 'Amphibia_image_0002.jpg', 'Amphibia_image_0655.jpg', 'Amphibia_image_0614.jpg', 'Amphibia_image_0008.jpg', 'Amphibia_image_0831.jpg', 'Amphibia_image_0030.jpg', 'Amphibia_image_0246.jpg', 'Amphibia_image_0962.jpg', 'Amphibia_image_0988.jpg', 'Amphibia_image_0633.jpg', 'Amphibia_image_0974.jpg', 'Amphibia_image_0945.jpg', 'Amphibia_image_0907.jpg', 'Amphibia_image_0691.jpg', 'Amphibia_image_0230.jpg', 'Amphibia_image_0586.jpg', 'Amphibia_image_0808.jpg', 'Amphibia_image_0263.jpg', 'Amphibia_image_0735.jpg', 'Amphibia_image_0036.jpg', 'Amphibia_image_0009.jpg', 'Amphibia_image_0067.jpg', 'Amphibia_image_0525.jpg', 'Amphibia_image_0511.jpg', 'Amphibia_image_0143.jpg', 'Amphibia_image_0905.jpg', 'Amphibia_image_0015.jpg', 'Amphibia_image_0652.jpg', 'Amphibia_image_0860.jpg', 'Amphibia_image_0664.jpg', 'Amphibia_image_0746.jpg', 'Amphibia_image_0757.jpg', 'Amphibia_image_0984.jpg', 'Amphibia_image_0084.jpg', 'Amphibia_image_0273.jpg', 'Amphibia_image_0001.jpg', 'Amphibia_image_0845.jpg', 'Amphibia_image_0659.jpg', 'Amphibia_image_0353.jpg', 'Amphibia_image_0744.jpg', 'Amphibia_image_0333.jpg', 'Amphibia_image_0047.jpg', 'Amphibia_image_0415.jpg', 'Amphibia_image_0026.jpg', 'Amphibia_image_0232.jpg', 'Amphibia_image_0853.jpg', 'Amphibia_image_0644.jpg', 'Amphibia_image_0935.jpg', 'Amphibia_image_0753.jpg', 'Amphibia_image_0038.jpg', 'Amphibia_image_0898.jpg', 'Amphibia_image_0725.jpg', 'Amphibia_image_0923.jpg', 'Amphibia_image_0569.jpg', 'Amphibia_image_0508.jpg', 'Amphibia_image_0478.jpg', 'Amphibia_image_0122.jpg', 'Amphibia_image_0269.jpg', 'Amphibia_image_0749.jpg', 'Amphibia_image_0524.jpg', 'Amphibia_image_0896.jpg', 'Amphibia_image_0137.jpg', 'Amphibia_image_0673.jpg', 'Amphibia_image_0768.jpg', 'Amphibia_image_0781.jpg', 'Amphibia_image_0577.jpg', 'Amphibia_image_0270.jpg', 'Amphibia_image_0327.jpg', 'Amphibia_image_0846.jpg', 'Amphibia_image_0689.jpg', 'Amphibia_image_0298.jpg', 'Amphibia_image_0021.jpg', 'Amphibia_image_0382.jpg', 'Amphibia_image_0346.jpg', 'Amphibia_image_0913.jpg', 'Amphibia_image_0617.jpg', 'Amphibia_image_0305.jpg', 'Amphibia_image_0560.jpg', 'Amphibia_image_0613.jpg', 'Amphibia_image_0102.jpg', 'Amphibia_image_0760.jpg', 'Amphibia_image_0960.jpg', 'Amphibia_image_0706.jpg', 'Amphibia_image_0336.jpg', 'Amphibia_image_0558.jpg', 'Amphibia_image_0590.jpg', 'Amphibia_image_0218.jpg', 'Amphibia_image_0551.jpg', 'Amphibia_image_0929.jpg', 'Amphibia_image_0125.jpg', 'Amphibia_image_0410.jpg', 'Amphibia_image_0367.jpg', 'Amphibia_image_0325.jpg', 'Amphibia_image_0703.jpg', 'Amphibia_image_0241.jpg', 'Amphibia_image_0444.jpg', 'Amphibia_image_0127.jpg', 'Amphibia_image_0434.jpg', 'Amphibia_image_0654.jpg', 'Amphibia_image_0496.jpg', 'Amphibia_image_0937.jpg', 'Amphibia_image_0322.jpg', 'Amphibia_image_0355.jpg', 'Amphibia_image_0011.jpg', 'Amphibia_image_0507.jpg', 'Amphibia_image_0041.jpg', 'Amphibia_image_0894.jpg', 'Amphibia_image_0839.jpg', 'Amphibia_image_0486.jpg', 'Amphibia_image_0848.jpg', 'Amphibia_image_0514.jpg', 'Amphibia_image_0679.jpg', 'Amphibia_image_0187.jpg', 'Amphibia_image_0675.jpg', 'Amphibia_image_0048.jpg', 'Amphibia_image_0204.jpg', 'Amphibia_image_0868.jpg', 'Amphibia_image_0470.jpg', 'Amphibia_image_0398.jpg', 'Amphibia_image_0532.jpg', 'Amphibia_image_0271.jpg', 'Amphibia_image_0261.jpg', 'Amphibia_image_0177.jpg', 'Amphibia_image_0727.jpg', 'Amphibia_image_0275.jpg', 'Amphibia_image_0213.jpg', 'Amphibia_image_0657.jpg', 'Amphibia_image_0862.jpg', 'Amphibia_image_0414.jpg', 'Amphibia_image_0431.jpg', 'Amphibia_image_0440.jpg', 'Amphibia_image_0529.jpg', 'Amphibia_image_0667.jpg', 'Amphibia_image_0624.jpg', 'Amphibia_image_0936.jpg', 'Amphibia_image_0979.jpg', 'Amphibia_image_0620.jpg', 'Amphibia_image_0564.jpg', 'Amphibia_image_0695.jpg', 'Amphibia_image_0466.jpg', 'Amphibia_image_0885.jpg', 'Amphibia_image_0065.jpg', 'Amphibia_image_0866.jpg', 'Amphibia_image_0247.jpg', 'Amphibia_image_0855.jpg', 'Amphibia_image_0656.jpg', 'Amphibia_image_0242.jpg', 'Amphibia_image_0279.jpg', 'Amphibia_image_0499.jpg', 'Amphibia_image_0053.jpg', 'Amphibia_image_0373.jpg', 'Amphibia_image_0202.jpg', 'Amphibia_image_0278.jpg', 'Amphibia_image_0181.jpg', 'Amphibia_image_0340.jpg', 'Amphibia_image_0611.jpg', 'Amphibia_image_0295.jpg', 'Amphibia_image_0546.jpg', 'Amphibia_image_0544.jpg', 'Amphibia_image_0184.jpg', 'Amphibia_image_0475.jpg', 'Amphibia_image_0648.jpg', 'Amphibia_image_0976.jpg', 'Amphibia_image_0604.jpg', 'Amphibia_image_0771.jpg', 'Amphibia_image_0098.jpg', 'Amphibia_image_0140.jpg', 'Amphibia_image_0563.jpg', 'Amphibia_image_0031.jpg', 'Amphibia_image_0737.jpg', 'Amphibia_image_0465.jpg', 'Amphibia_image_0498.jpg', 'Amphibia_image_0114.jpg', 'Amphibia_image_0243.jpg', 'Amphibia_image_0910.jpg', 'Amphibia_image_0155.jpg', 'Amphibia_image_0267.jpg', 'Amphibia_image_0688.jpg', 'Amphibia_image_0432.jpg', 'Amphibia_image_0854.jpg', 'Amphibia_image_0938.jpg', 'Amphibia_image_0476.jpg', 'Amphibia_image_0635.jpg', 'Amphibia_image_0967.jpg', 'Amphibia_image_0713.jpg', 'Amphibia_image_0610.jpg', 'Amphibia_image_0536.jpg', 'Amphibia_image_0272.jpg', 'Amphibia_image_0119.jpg', 'Amphibia_image_0814.jpg', 'Amphibia_image_0758.jpg', 'Amphibia_image_0981.jpg', 'Amphibia_image_0016.jpg', 'Amphibia_image_0088.jpg', 'Amphibia_image_0815.jpg', 'Amphibia_image_0750.jpg', 'Amphibia_image_0375.jpg', 'Amphibia_image_0718.jpg', 'Amphibia_image_0153.jpg', 'Amphibia_image_0198.jpg', 'Amphibia_image_0531.jpg', 'Amphibia_image_0439.jpg', 'Amphibia_image_0539.jpg', 'Amphibia_image_0568.jpg', 'Amphibia_image_0452.jpg', 'Amphibia_image_0092.jpg', 'Amphibia_image_0567.jpg', 'Amphibia_image_0887.jpg', 'Amphibia_image_0728.jpg', 'Amphibia_image_0055.jpg', 'Amphibia_image_0882.jpg', 'Amphibia_image_0093.jpg', 'Amphibia_image_0784.jpg', 'Amphibia_image_0538.jpg', 'Amphibia_image_0454.jpg', 'Amphibia_image_0637.jpg', 'Amphibia_image_0050.jpg', 'Amphibia_image_0969.jpg', 'Amphibia_image_0489.jpg', 'Amphibia_image_0584.jpg', 'Amphibia_image_0736.jpg', 'Amphibia_image_0201.jpg', 'Amphibia_image_0908.jpg', 'Amphibia_image_0027.jpg', 'Amphibia_image_0220.jpg', 'Amphibia_image_0841.jpg', 'Amphibia_image_0566.jpg', 'Amphibia_image_0483.jpg', 'Amphibia_image_0097.jpg', 'Amphibia_image_0352.jpg', 'Amphibia_image_0285.jpg', 'Amphibia_image_0104.jpg', 'Amphibia_image_0903.jpg', 'Amphibia_image_0170.jpg', 'Amphibia_image_0552.jpg', 'Amphibia_image_0895.jpg', 'Amphibia_image_0504.jpg', 'Amphibia_image_0658.jpg', 'Amphibia_image_0920.jpg', 'Amphibia_image_0879.jpg', 'Amphibia_image_0765.jpg', 'Amphibia_image_0641.jpg', 'Amphibia_image_0954.jpg', 'Amphibia_image_0358.jpg', 'Amphibia_image_0877.jpg', 'Amphibia_image_0668.jpg', 'Amphibia_image_0660.jpg', 'Amphibia_image_0726.jpg', 'Amphibia_image_0537.jpg', 'Amphibia_image_0479.jpg', 'Amphibia_image_0049.jpg', 'Amphibia_image_0299.jpg', 'Amphibia_image_0407.jpg', 'Amphibia_image_0126.jpg', 'Amphibia_image_0676.jpg', 'Amphibia_image_0606.jpg', 'Amphibia_image_0891.jpg', 'Amphibia_image_0283.jpg', 'Amphibia_image_0510.jpg', 'Amphibia_image_0743.jpg', 'Amphibia_image_0696.jpg', 'Amphibia_image_0265.jpg', 'Amphibia_image_0460.jpg', 'Amphibia_image_0810.jpg', 'Amphibia_image_0516.jpg', 'Amphibia_image_0986.jpg', 'Amphibia_image_0678.jpg', 'Amphibia_image_0304.jpg', 'Amphibia_image_0618.jpg', 'Amphibia_image_0029.jpg', 'Amphibia_image_0300.jpg', 'Amphibia_image_0733.jpg', 'Amphibia_image_0965.jpg', 'Amphibia_image_0849.jpg', 'Amphibia_image_0802.jpg', 'Amphibia_image_0528.jpg', 'Amphibia_image_0662.jpg', 'Amphibia_image_0880.jpg', 'Amphibia_image_0447.jpg', 'Amphibia_image_0886.jpg', 'Amphibia_image_0931.jpg', 'Amphibia_image_0809.jpg', 'Amphibia_image_0865.jpg', 'Amphibia_image_0039.jpg', 'Amphibia_image_0989.jpg', 'Amphibia_image_0632.jpg', 'Amphibia_image_0535.jpg', 'Amphibia_image_0105.jpg', 'Amphibia_image_0392.jpg', 'Amphibia_image_0205.jpg', 'Amphibia_image_0180.jpg', 'Amphibia_image_0151.jpg', 'Amphibia_image_0186.jpg', 'Amphibia_image_0034.jpg', 'Amphibia_image_0334.jpg', 'Amphibia_image_0642.jpg', 'Amphibia_image_0494.jpg', 'Amphibia_image_0266.jpg', 'Amphibia_image_0548.jpg', 'Amphibia_image_0961.jpg', 'Amphibia_image_0747.jpg', 'Amphibia_image_0963.jpg', 'Amphibia_image_0391.jpg', 'Amphibia_image_0874.jpg', 'Amphibia_image_0139.jpg', 'Amphibia_image_0417.jpg', 'Amphibia_image_0115.jpg', 'Amphibia_image_0956.jpg', 'Amphibia_image_0943.jpg', 'Amphibia_image_0605.jpg', 'Amphibia_image_0190.jpg', 'Amphibia_image_0112.jpg', 'Amphibia_image_0915.jpg', 'Amphibia_image_0371.jpg', 'Amphibia_image_0342.jpg', 'Amphibia_image_0906.jpg', 'Amphibia_image_0138.jpg', 'Amphibia_image_0379.jpg', 'Amphibia_image_0312.jpg', 'Amphibia_image_0904.jpg', 'Amphibia_image_0040.jpg', 'Amphibia_image_0778.jpg', 'Amphibia_image_0361.jpg', 'Amphibia_image_0670.jpg', 'Amphibia_image_0045.jpg', 'Amphibia_image_0888.jpg', 'Amphibia_image_0800.jpg', 'Amphibia_image_0717.jpg', 'Amphibia_image_0280.jpg', 'Amphibia_image_0794.jpg', 'Amphibia_image_0565.jpg', 'Amphibia_image_0628.jpg', 'Amphibia_image_0191.jpg', 'Amphibia_image_0559.jpg', 'Amphibia_image_0799.jpg', 'Amphibia_image_0117.jpg', 'Amphibia_image_0394.jpg', 'Amphibia_image_0132.jpg', 'Amphibia_image_0816.jpg', 'Amphibia_image_0461.jpg', 'Amphibia_image_0141.jpg', 'Amphibia_image_0585.jpg', 'Amphibia_image_0121.jpg', 'Amphibia_image_0987.jpg', 'Amphibia_image_0442.jpg', 'Amphibia_image_0707.jpg', 'Amphibia_image_0519.jpg', 'Amphibia_image_0400.jpg', 'Amphibia_image_0591.jpg', 'Amphibia_image_0957.jpg', 'Amphibia_image_0513.jpg', 'Amphibia_image_0396.jpg', 'Amphibia_image_0650.jpg', 'Amphibia_image_0704.jpg', 'Amphibia_image_0665.jpg', 'Amphibia_image_0754.jpg', 'Amphibia_image_0646.jpg', 'Amphibia_image_0313.jpg', 'Amphibia_image_0473.jpg', 'Amphibia_image_0575.jpg', 'Amphibia_image_0705.jpg', 'Amphibia_image_0557.jpg', 'Amphibia_image_0666.jpg', 'Amphibia_image_0834.jpg', 'Amphibia_image_0693.jpg', 'Amphibia_image_0958.jpg', 'Amphibia_image_0468.jpg', 'Amphibia_image_0899.jpg', 'Amphibia_image_0282.jpg', 'Amphibia_image_0786.jpg', 'Amphibia_image_0932.jpg', 'Amphibia_image_0007.jpg', 'Amphibia_image_0316.jpg', 'Amphibia_image_0259.jpg', 'Amphibia_image_0406.jpg', 'Amphibia_image_0982.jpg', 'Amphibia_image_0145.jpg', 'Amphibia_image_0107.jpg', 'Amphibia_image_0649.jpg', 'Amphibia_image_0370.jpg', 'Amphibia_image_0068.jpg', 'Amphibia_image_0701.jpg', 'Amphibia_image_0006.jpg', 'Amphibia_image_0071.jpg', 'Amphibia_image_0341.jpg', 'Amphibia_image_0182.jpg', 'Amphibia_image_0423.jpg', 'Amphibia_image_0490.jpg', 'Amphibia_image_0946.jpg', 'Amphibia_image_0647.jpg', 'Amphibia_image_0787.jpg', 'Amphibia_image_0922.jpg', 'Amphibia_image_0043.jpg', 'Amphibia_image_0835.jpg', 'Amphibia_image_0369.jpg', 'Amphibia_image_0487.jpg', 'Amphibia_image_0344.jpg', 'Amphibia_image_0481.jpg', 'Amphibia_image_0399.jpg', 'Amphibia_image_0057.jpg', 'Amphibia_image_0319.jpg', 'Amphibia_image_0555.jpg', 'Amphibia_image_0973.jpg', 'Amphibia_image_0639.jpg', 'Amphibia_image_0491.jpg', 'Amphibia_image_0774.jpg', 'Amphibia_image_0975.jpg', 'Amphibia_image_0323.jpg', 'Amphibia_image_0455.jpg', 'Amphibia_image_0160.jpg', 'Amphibia_image_0308.jpg', 'Amphibia_image_0381.jpg', 'Amphibia_image_0804.jpg', 'Amphibia_image_0545.jpg', 'Amphibia_image_0101.jpg', 'Amphibia_image_0020.jpg', 'Amphibia_image_0228.jpg', 'Amphibia_image_0235.jpg', 'Amphibia_image_0154.jpg', 'Amphibia_image_0199.jpg', 'Amphibia_image_0464.jpg', 'Amphibia_image_0216.jpg', 'Amphibia_image_0636.jpg', 'Amphibia_image_0710.jpg', 'Amphibia_image_0233.jpg', 'Amphibia_image_0087.jpg', 'Amphibia_image_0788.jpg', 'Amphibia_image_0916.jpg', 'Amphibia_image_0977.jpg', 'Amphibia_image_0248.jpg', 'Amphibia_image_0542.jpg', 'Amphibia_image_0582.jpg', 'Amphibia_image_0871.jpg', 'Amphibia_image_0782.jpg', 'Amphibia_image_0320.jpg', 'Amphibia_image_0385.jpg', 'Amphibia_image_0561.jpg', 'Amphibia_image_0601.jpg', 'Amphibia_image_0506.jpg', 'Amphibia_image_0681.jpg', 'Amphibia_image_0978.jpg', 'Amphibia_image_0311.jpg', 'Amphibia_image_0412.jpg', 'Amphibia_image_0738.jpg', 'Amphibia_image_1000.jpg', 'Amphibia_image_0389.jpg', 'Amphibia_image_0547.jpg', 'Amphibia_image_0161.jpg', 'Amphibia_image_0183.jpg', 'Amphibia_image_0740.jpg', 'Amphibia_image_0867.jpg', 'Amphibia_image_0603.jpg', 'Amphibia_image_0013.jpg', 'Amphibia_image_0174.jpg', 'Amphibia_image_0622.jpg', 'Amphibia_image_0044.jpg', 'Amphibia_image_0206.jpg', 'Amphibia_image_0293.jpg', 'Amphibia_image_0326.jpg', 'Amphibia_image_0086.jpg', 'Amphibia_image_0176.jpg', 'Amphibia_image_0192.jpg', 'Amphibia_image_0357.jpg', 'Amphibia_image_0349.jpg', 'Amphibia_image_0797.jpg', 'Amphibia_image_0404.jpg', 'Amphibia_image_0083.jpg', 'Amphibia_image_0588.jpg', 'Amphibia_image_0111.jpg', 'Amphibia_image_0028.jpg']\n"
+     ]
+    }
+   ],
+   "source": [
+    "# List the train folders\n",
+    "print(os.listdir(train_dir))\n",
+    "\n",
+    "# Check a specific folder\n",
+    "print(os.listdir(os.path.join(train_dir, 'Amphibia')))\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "091ed21e",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-24T18:08:07.853435Z",
+     "iopub.status.busy": "2024-11-24T18:08:07.853028Z",
+     "iopub.status.idle": "2024-11-24T18:08:07.859953Z",
+     "shell.execute_reply": "2024-11-24T18:08:07.858769Z"
+    },
+    "papermill": {
+     "duration": 0.01379,
+     "end_time": "2024-11-24T18:08:07.862183",
+     "exception": false,
+     "start_time": "2024-11-24T18:08:07.848393",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "# Data transformations\n",
+    "train_transforms = transforms.Compose([\n",
+    "    transforms.Resize((224, 224)),  # Resize images for pretrained models\n",
+    "    transforms.RandomHorizontalFlip(),\n",
+    "    transforms.RandomRotation(10),\n",
+    "    transforms.ToTensor(),\n",
+    "    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # Normalize to match ImageNet stats\n",
+    "])\n",
+    "\n",
+    "test_transforms = transforms.Compose([\n",
+    "    transforms.Resize((224, 224)),\n",
+    "    transforms.ToTensor(),\n",
+    "    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])\n",
+    "])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "9f7ded94",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-24T18:08:07.870665Z",
+     "iopub.status.busy": "2024-11-24T18:08:07.870301Z",
+     "iopub.status.idle": "2024-11-24T18:08:07.877106Z",
+     "shell.execute_reply": "2024-11-24T18:08:07.876024Z"
+    },
+    "papermill": {
+     "duration": 0.013791,
+     "end_time": "2024-11-24T18:08:07.879426",
+     "exception": false,
+     "start_time": "2024-11-24T18:08:07.865635",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "class AnimalPlantDataset(Dataset):\n",
+    "    def __init__(self, image_paths, labels=None, transform=None):\n",
+    "        self.image_paths = image_paths\n",
+    "        self.labels = labels\n",
+    "        self.transform = transform\n",
+    "\n",
+    "    def __len__(self):\n",
+    "        return len(self.image_paths)\n",
+    "\n",
+    "    def __getitem__(self, idx):\n",
+    "        img_path = self.image_paths[idx]\n",
+    "        image = Image.open(img_path).convert('RGB')  # Open image and ensure 3 channels\n",
+    "\n",
+    "        if self.transform:\n",
+    "            image = self.transform(image)\n",
+    "        \n",
+    "        if self.labels is not None:\n",
+    "            label = self.labels[idx]\n",
+    "            return image, label\n",
+    "        else:\n",
+    "            return image"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "ba359788",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-24T18:08:07.888225Z",
+     "iopub.status.busy": "2024-11-24T18:08:07.887787Z",
+     "iopub.status.idle": "2024-11-24T18:08:08.032404Z",
+     "shell.execute_reply": "2024-11-24T18:08:08.031247Z"
+    },
+    "papermill": {
+     "duration": 0.151834,
+     "end_time": "2024-11-24T18:08:08.034903",
+     "exception": false,
+     "start_time": "2024-11-24T18:08:07.883069",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "from PIL import Image\n",
+    "\n",
+    "# Load train images and labels\n",
+    "classes = os.listdir(train_dir)  # Folder names are class labels\n",
+    "class_to_idx = {cls: idx for idx, cls in enumerate(classes)}  # Map class names to indices\n",
+    "\n",
+    "image_paths, labels = [], []\n",
+    "\n",
+    "for cls in classes:\n",
+    "    cls_path = os.path.join(train_dir, cls)\n",
+    "    for img_name in os.listdir(cls_path):\n",
+    "        image_paths.append(os.path.join(cls_path, img_name))\n",
+    "        labels.append(class_to_idx[cls])\n",
+    "\n",
+    "# Split train data into training and validation\n",
+    "train_paths, val_paths, train_labels, val_labels = train_test_split(\n",
+    "    image_paths, labels, test_size=0.2, random_state=42\n",
+    ")\n",
+    "\n",
+    "train_dataset = AnimalPlantDataset(train_paths, train_labels, transform=train_transforms)\n",
+    "val_dataset = AnimalPlantDataset(val_paths, val_labels, transform=test_transforms)\n",
+    "\n",
+    "# Load test data\n",
+    "test_paths = [os.path.join(test_dir, img_name) for img_name in os.listdir(test_dir)]\n",
+    "test_dataset = AnimalPlantDataset(test_paths, transform=test_transforms)\n",
+    "\n",
+    "# DataLoaders\n",
+    "batch_size = 32\n",
+    "\n",
+    "train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)\n",
+    "val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)\n",
+    "test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "d275ecd2",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-24T18:08:08.043591Z",
+     "iopub.status.busy": "2024-11-24T18:08:08.043175Z",
+     "iopub.status.idle": "2024-11-24T18:08:09.626580Z",
+     "shell.execute_reply": "2024-11-24T18:08:09.625612Z"
+    },
+    "papermill": {
+     "duration": 1.590999,
+     "end_time": "2024-11-24T18:08:09.629486",
+     "exception": false,
+     "start_time": "2024-11-24T18:08:08.038487",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/opt/conda/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.\n",
+      "  warnings.warn(\n",
+      "/opt/conda/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=ResNet50_Weights.IMAGENET1K_V1`. You can also use `weights=ResNet50_Weights.DEFAULT` to get the most up-to-date weights.\n",
+      "  warnings.warn(msg)\n",
+      "Downloading: \"https://download.pytorch.org/models/resnet50-0676ba61.pth\" to /root/.cache/torch/hub/checkpoints/resnet50-0676ba61.pth\n",
+      "100%|██████████| 97.8M/97.8M [00:00<00:00, 166MB/s]\n"
+     ]
+    }
+   ],
+   "source": [
+    "device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\n",
+    "\n",
+    "# Load a pretrained ResNet model\n",
+    "model = models.resnet50(pretrained=True)\n",
+    "\n",
+    "# Replace the final layer for 10 classes\n",
+    "num_features = model.fc.in_features\n",
+    "model.fc = torch.nn.Linear(num_features, 10)\n",
+    "model = model.to(device)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "edf7abf8",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-24T18:08:09.639711Z",
+     "iopub.status.busy": "2024-11-24T18:08:09.639341Z",
+     "iopub.status.idle": "2024-11-24T18:08:09.647355Z",
+     "shell.execute_reply": "2024-11-24T18:08:09.645990Z"
+    },
+    "papermill": {
+     "duration": 0.015927,
+     "end_time": "2024-11-24T18:08:09.649692",
+     "exception": false,
+     "start_time": "2024-11-24T18:08:09.633765",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "from torch.optim import Adam\n",
+    "from torch.optim.lr_scheduler import StepLR\n",
+    "from torch.nn import CrossEntropyLoss\n",
+    "\n",
+    "criterion = CrossEntropyLoss()\n",
+    "optimizer = Adam(model.parameters(), lr=0.001)\n",
+    "scheduler = StepLR(optimizer, step_size=5, gamma=0.1)  # Reduce learning rate after every 5 epochs"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "187a7f6e",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-24T18:08:09.660037Z",
+     "iopub.status.busy": "2024-11-24T18:08:09.659679Z",
+     "iopub.status.idle": "2024-11-24T18:08:09.672044Z",
+     "shell.execute_reply": "2024-11-24T18:08:09.670981Z"
+    },
+    "papermill": {
+     "duration": 0.020426,
+     "end_time": "2024-11-24T18:08:09.674521",
+     "exception": false,
+     "start_time": "2024-11-24T18:08:09.654095",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs=10):\n",
+    "    best_f1 = 0.0\n",
+    "    \n",
+    "    for epoch in range(num_epochs):\n",
+    "        print(f\"Epoch {epoch+1}/{num_epochs}\")\n",
+    "        \n",
+    "        # Training phase\n",
+    "        model.train()\n",
+    "        train_loss = 0.0\n",
+    "        train_correct = 0\n",
+    "        train_total = 0\n",
+    "        \n",
+    "        for images, labels in train_loader:\n",
+    "            images, labels = images.to(device), labels.to(device)\n",
+    "            \n",
+    "            optimizer.zero_grad()\n",
+    "            outputs = model(images)\n",
+    "            loss = criterion(outputs, labels)\n",
+    "            loss.backward()\n",
+    "            optimizer.step()\n",
+    "            \n",
+    "            train_loss += loss.item()\n",
+    "            _, preds = torch.max(outputs, 1)\n",
+    "            train_correct += (preds == labels).sum().item()\n",
+    "            train_total += labels.size(0)\n",
+    "        \n",
+    "        train_acc = train_correct / train_total\n",
+    "        \n",
+    "        # Validation phase\n",
+    "        model.eval()\n",
+    "        val_loss = 0.0\n",
+    "        val_correct = 0\n",
+    "        val_total = 0\n",
+    "        val_preds = []\n",
+    "        val_targets = []\n",
+    "        \n",
+    "        with torch.no_grad():\n",
+    "            for images, labels in val_loader:\n",
+    "                images, labels = images.to(device), labels.to(device)\n",
+    "                outputs = model(images)\n",
+    "                loss = criterion(outputs, labels)\n",
+    "                \n",
+    "                val_loss += loss.item()\n",
+    "                _, preds = torch.max(outputs, 1)\n",
+    "                val_correct += (preds == labels).sum().item()\n",
+    "                val_total += labels.size(0)\n",
+    "                val_preds.extend(preds.cpu().numpy())\n",
+    "                val_targets.extend(labels.cpu().numpy())\n",
+    "        \n",
+    "        val_acc = val_correct / val_total\n",
+    "        \n",
+    "        # Calculate F1 score\n",
+    "        from sklearn.metrics import f1_score\n",
+    "        val_f1 = f1_score(val_targets, val_preds, average='weighted')\n",
+    "        \n",
+    "        print(f\"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}\")\n",
+    "        print(f\"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, Val F1: {val_f1:.4f}\")\n",
+    "        \n",
+    "        if val_f1 > best_f1:\n",
+    "            best_f1 = val_f1\n",
+    "            torch.save(model.state_dict(), 'best_model.pth')  # Save the best model\n",
+    "        \n",
+    "        scheduler.step()\n",
+    "\n",
+    "    print(\"Training Complete. Best F1 Score:\", best_f1)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "9931da69",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-24T18:08:09.684730Z",
+     "iopub.status.busy": "2024-11-24T18:08:09.683988Z",
+     "iopub.status.idle": "2024-11-25T02:49:07.178143Z",
+     "shell.execute_reply": "2024-11-25T02:49:07.174484Z"
+    },
+    "papermill": {
+     "duration": 31257.526888,
+     "end_time": "2024-11-25T02:49:07.205572",
+     "exception": false,
+     "start_time": "2024-11-24T18:08:09.678684",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Epoch 1/10\n",
+      "Train Loss: 518.0603, Train Acc: 0.2720\n",
+      "Val Loss: 124.2983, Val Acc: 0.3290, Val F1: 0.3158\n",
+      "Epoch 2/10\n",
+      "Train Loss: 451.5632, Train Acc: 0.3662\n",
+      "Val Loss: 113.1753, Val Acc: 0.3745, Val F1: 0.3350\n",
+      "Epoch 3/10\n",
+      "Train Loss: 424.2150, Train Acc: 0.4018\n",
+      "Val Loss: 113.8023, Val Acc: 0.4015, Val F1: 0.3959\n",
+      "Epoch 4/10\n",
+      "Train Loss: 401.4548, Train Acc: 0.4338\n",
+      "Val Loss: 109.6628, Val Acc: 0.3975, Val F1: 0.3961\n",
+      "Epoch 5/10\n",
+      "Train Loss: 378.0677, Train Acc: 0.4667\n",
+      "Val Loss: 98.3644, Val Acc: 0.4670, Val F1: 0.4564\n",
+      "Epoch 6/10\n",
+      "Train Loss: 312.4787, Train Acc: 0.5672\n",
+      "Val Loss: 79.7493, Val Acc: 0.5585, Val F1: 0.5593\n",
+      "Epoch 7/10\n",
+      "Train Loss: 284.9276, Train Acc: 0.6046\n",
+      "Val Loss: 77.7551, Val Acc: 0.5810, Val F1: 0.5780\n",
+      "Epoch 8/10\n",
+      "Train Loss: 267.7054, Train Acc: 0.6272\n",
+      "Val Loss: 77.5180, Val Acc: 0.5785, Val F1: 0.5753\n",
+      "Epoch 9/10\n",
+      "Train Loss: 252.1214, Train Acc: 0.6478\n",
+      "Val Loss: 75.9552, Val Acc: 0.5900, Val F1: 0.5888\n",
+      "Epoch 10/10\n",
+      "Train Loss: 234.9312, Train Acc: 0.6746\n",
+      "Val Loss: 77.6960, Val Acc: 0.5945, Val F1: 0.5945\n",
+      "Training Complete. Best F1 Score: 0.5945092381717518\n"
+     ]
+    }
+   ],
+   "source": [
+    "train_model(model, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs=10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "9cc63adc",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-25T02:49:07.223535Z",
+     "iopub.status.busy": "2024-11-25T02:49:07.222541Z",
+     "iopub.status.idle": "2024-11-25T02:52:53.258427Z",
+     "shell.execute_reply": "2024-11-25T02:52:53.257260Z"
+    },
+    "papermill": {
+     "duration": 226.049536,
+     "end_time": "2024-11-25T02:52:53.261017",
+     "exception": false,
+     "start_time": "2024-11-25T02:49:07.211481",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/tmp/ipykernel_17/518044222.py:2: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.\n",
+      "  model.load_state_dict(torch.load('best_model.pth'))\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Load the best model\n",
+    "model.load_state_dict(torch.load('best_model.pth'))\n",
+    "\n",
+    "# Predict on test data\n",
+    "model.eval()\n",
+    "test_preds = []\n",
+    "\n",
+    "with torch.no_grad():\n",
+    "    for images in test_loader:\n",
+    "        images = images.to(device)\n",
+    "        outputs = model(images)\n",
+    "        _, preds = torch.max(outputs, 1)\n",
+    "        test_preds.extend(preds.cpu().numpy())\n",
+    "\n",
+    "# Save predictions to CSV\n",
+    "submission = pd.DataFrame({\n",
+    "    'Image_ID': [os.path.basename(p).split('.')[0] for p in test_paths],\n",
+    "    'Label': test_preds\n",
+    "})\n",
+    "submission.to_csv('submission.csv', index=False)"
+   ]
+  }
+ ],
+ "metadata": {
+  "kaggle": {
+   "accelerator": "none",
+   "dataSources": [
+    {
+     "databundleVersionId": 9549185,
+     "sourceId": 84763,
+     "sourceType": "competition"
+    }
+   ],
+   "dockerImageVersionId": 30786,
+   "isGpuEnabled": false,
+   "isInternetEnabled": true,
+   "language": "python",
+   "sourceType": "notebook"
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.14"
+  },
+  "papermill": {
+   "default_parameters": {},
+   "duration": 31499.503958,
+   "end_time": "2024-11-25T02:52:56.094310",
+   "environment_variables": {},
+   "exception": null,
+   "input_path": "__notebook__.ipynb",
+   "output_path": "__notebook__.ipynb",
+   "parameters": {},
+   "start_time": "2024-11-24T18:07:56.590352",
+   "version": "2.6.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
