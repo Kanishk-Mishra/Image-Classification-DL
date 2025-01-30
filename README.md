@@ -38,8 +38,6 @@ This repository contains my solution for the **Image Classification Competition 
 
 ## 📂 Repository Structure
 ```
-|-- dataset/                # Dataset folder (train & test images)
-|-- models/                 # Saved model checkpoints
 |-- submission.csv          # Final submission file
 |-- README.md               # This file
 |-- notebook.ipynb          # Kaggle notebook with full code
