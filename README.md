@@ -62,3 +62,5 @@ pip install torch torchvision timm pandas tqdm
 ## 🤝 Contributions & Feedback
 If you have suggestions or improvements, feel free to open an issue or a pull request! 🚀
 
+📍 Check out my Kaggle profile [here](https://www.kaggle.com/canisqmisra)
+
