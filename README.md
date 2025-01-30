@@ -18,7 +18,7 @@ This repository contains my solution for the **Image Classification Competition 
 - **Dataset:**
   - **Train Set:** 10,000 images (10 classes, 1,000 per class)
   - **Test Set:** 2,000 images (to predict labels)
-  - **Sample Submission:** Provided in `sample_submission.csv`
+  - [Download the dataset here](https://drive.google.com/drive/folders/1dwGzQwooU4PT642faBxBj_CS6OB_FiFE?usp=sharing)
 
 ## 🚀 Model & Approach
 - **Pretrained Model:** `eva02_large_patch14_448.mim_m38m_ft_in22k_in1k` (from TIMM)
