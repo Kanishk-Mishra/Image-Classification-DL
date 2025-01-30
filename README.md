@@ -38,9 +38,9 @@ This repository contains my solution for the **Image Classification Competition 
 
 ## 📂 Repository Structure
 ```
-|-- submission.csv          # Final submission file
 |-- README.md               # This file
 |-- notebook.ipynb          # Kaggle notebook with full code
+|-- submission.csv          # Final submission file
 ```
 
 ## 📌 Dependencies
