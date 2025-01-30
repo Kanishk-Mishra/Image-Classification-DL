@@ -40,11 +40,7 @@ This repository contains my solution for the **Image Classification Competition 
 ```
 |-- dataset/                # Dataset folder (train & test images)
 |-- models/                 # Saved model checkpoints
-|-- src/
-|   |-- train.py            # Training script
-|   |-- infer.py            # Inference script
 |-- submission.csv          # Final submission file
-|-- requirements.txt        # Python dependencies
 |-- README.md               # This file
 |-- notebook.ipynb          # Kaggle notebook with full code
 ```
